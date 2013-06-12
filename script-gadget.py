@@ -24,14 +24,13 @@ from matplotlib.colors import LogNorm, Normalize
 from yt.analysis_modules.halo_finding.api import *
 from yt.geometry.oct_container import ParticleOctreeContainer
 
-def finest_DM_density(field, data):
+def finest_DM_density(field, data): # user-defined field
     filter = np.where(data["ParticleMassMsun"] <= 340000)
 
     pos = data["all", "Coordinates"][filter]
     d = data.deposit(pos, [data["all", "Mass"][filter]], method = "cic")
     d /= data["CellVolume"]
     return d
-
 GadgetFieldInfo.add_field(("deposit", "finest_DM_density"),
                           function = finest_DM_density,
                           validators = [ValidateSpatial()],
@@ -40,27 +39,23 @@ GadgetFieldInfo.add_field(("deposit", "finest_DM_density"),
                           projected_units = r"\mathrm{g}/\mathrm{cm}^{2}",
                           projection_conversion = 'cm')
 
-#center = np.array([29.11572,  31.61874,  29.3679])
 center = np.array([29.754, 32.14, 28.29]) # Gadget unit system: [0, 60]
-#center = np.array([ 29.76579666,  32.57726669,  28.76054764]) # all_density maximum location found with ds.h.find_max(('deposit', 'all_density')) in yt 
-#center = np.array([ 29.81300354,  32.12242126,  28.33488464])  
 ds = GadgetStaticOutput("snapshot_010", unit_base = {"mpchcm": 1.0})
-print ds.h.oct_handler.n_ref
-ds.h.oct_handler.n_ref = 2
-print ds.h.oct_handler.n_ref
-#ds = GadgetStaticOutput("snapshot_agora_adapt_noUNEQUAL_011", unit_base = {"mpchcm": 1.0})
-#ds = load("snapshot_010", root_dimensions=[2, 2, 2])
-print ds.parameters["Npart"], ds.parameters["Nall"]
-print ds.units["mpchcm"]
-print ds.units["mpch"]
-print ds.units["cm"]
+print ds.h.derived_field_list
+
+
+#=======================
+#  [1] TOTAL MASS
+#=======================
 
 sp = ds.h.sphere(center, (1.0, 'mpc'))
 total_particle_mass = sp.quantities["TotalQuantity"]( [("all","ParticleMassMsun")] )[0]
 print "Total particle mass within a radius of 1 Mpc of the center: %0.3e Msun" % total_particle_mass
-print ds.h.derived_field_list
 
-pw = ProjectionPlot(ds, "z", ("deposit", "all_density"), weight_field=None, center=center, width=(1.0, 'mpch')).save()
+
+#=======================
+#  [2] BASIC PLOTS
+#=======================
 
 w = (1.0, "mpch")
 source = ds.h.region(center, center - (w[0]/ds[w[1]])/2.0, center + (w[0]/ds[w[1]])/2.0)
@@ -68,15 +63,16 @@ proj = ds.h.proj( ("deposit", "all_density"), 2, weight_field = ("deposit", "all
 pw = proj.to_pw(fields = [("deposit", "all_density")], center = center, width = w)
 pw.set_zlim(("deposit","all_density"), 1e-32, 1e-25)
 pw.save("snapshot_010_Projection_z_all_density_subset.png")
-#pw.save("snapshot_agora_adapt_noUNEQUAL_011_Projection_z_all_density_subset.png")
 
 proj = ds.h.proj( ("deposit", "finest_DM_density"), 2, weight_field = ("deposit", "finest_DM_density"), data_source = source)
 pw = proj.to_pw(fields = [("deposit", "finest_DM_density")], center = center, width = w)
 pw.set_zlim(("deposit","finest_DM_density"), 1e-32, 1e-25)
 pw.save("snapshot_010_Projection_z_finest_DM_density_subset.png")
-#pw.save("snapshot_agora_adapt_noUNEQUAL_011_Projection_z_finest_DM_density_subset.png")
 
 
+#=======================
+#  [3] BASIC PROFILE
+#=======================
 
 sphere_radius        = 300  # kpc
 inner_radius         = 1    # kpc
@@ -111,6 +107,9 @@ for k in range(0, total_bins):
 fout.close()
 
 
+#=======================
+#  [4] HOP HALOFINDER
+#=======================
 
 # halos = HaloFinder(ds, subvolume = source, threshold=80.)
 # print halos[0].center_of_mass() 
