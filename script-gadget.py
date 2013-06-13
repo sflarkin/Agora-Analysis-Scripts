@@ -1,13 +1,10 @@
 #####################################################################
 #
-#  YT SCRIPT TO PRODUCE PROJECTED DARK MATTER DENSITY 
-#  USING ONLY THE FINEST DM PARTICLES ON YT-3.0 alpha release 2
+#  AGORA SCRIPT
 #  
 #  PLEASE SEE:  https://hub.yt-project.org/nb/abu5nb
 #
-#  FUNCTIONALITY AVAILABLE GREATLY THANKS TO:  Matthew Turk et al.
-#
-#  SCRIPT WRITTEN BY:  Ji-hoon Kim on June 6, 2013
+#  FOR SCRIPT HISTORY SEE VERSION CONTROL CHANGELOG
 #
 #####################################################################
 
