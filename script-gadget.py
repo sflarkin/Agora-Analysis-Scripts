@@ -44,7 +44,7 @@ def particle_count(field, data):
 GadgetFieldInfo.add_field(("all", "particle_count"), function=particle_count,
                           particle_type = True)
 
-center = np.array([29.754, 32.14, 28.29]) # Gadget unit system: [0, 60]
+center = np.array([29.7555, 32.1242, 28.2893])  # Gadget unit system: [0, 60]
 ds = GadgetStaticOutput("snapshot_010", unit_base = {"mpchcm": 1.0})
 
 #=======================
@@ -55,68 +55,67 @@ sp = ds.h.sphere(center, (1.0, 'mpc'))
 total_particle_mass = sp.quantities["TotalQuantity"]( ("all","ParticleMassMsun") )[0]
 print "Total particle mass within a radius of 1 Mpc of the center: %0.3e Msun" % total_particle_mass
 
-
 #=======================
 #  [2] BASIC PLOTS
 #=======================
 
 w = (1.0, "mpch")
 axis = 2
+colorbounds = (1e-32, 1e-25)
 
 res = [1024] * 3
 res[axis] = 16
 
-LE = center - 0.5/ds['mpch']
-RE = center + 0.5/ds['mpch']
+LE = center - 0.5*(w[0]/ds[w[1]])
+RE = center + 0.5*(w[0]/ds[w[1]])
 
 source = ds.h.arbitrary_grid(LE, RE, res)
 
 fields = [("deposit", "all_cic"), ("deposit", "finest_DM_cic")]
 
 for field in fields:
-    # Manually do this until we have a solution in place to do it from
-    # arbitrary_grid objects.
+    # Weighted Projection: Manually do this until we have a solution in place 
+    # to do it from arbitrary_grid objects.
     num = (source[field] * source[field]).sum(axis=axis)
     num *= (RE[axis] - LE[axis])*ds['cm'] # dl
     den = (source[field]).sum(axis=axis)
     den *= (RE[axis] - LE[axis])*ds['cm'] # dl
     proj = (num/den)
+    proj[proj!=proj] = colorbounds[0] # remove NaN for background
     plt.clf()
-    norm = LogNorm(1e-32, 1e-25)
-    plt.imshow(proj, interpolation='nearest', origin='lower',
-               norm = norm, extent = [-0.5, 0.5, -0.5, 0.5])
-    plt.xlabel(r"$\mathrm{Mpc} / h (\mathrm{comoving})$")
-    plt.ylabel(r"$\mathrm{Mpc} / h (\mathrm{comoving})$")
+    norm = LogNorm(colorbounds[0], colorbounds[1])
+    plt.imshow(proj.swapaxes(0,1), interpolation='nearest', origin='lower',
+               norm = norm, extent = [-0.5*(w[0]/ds[w[1]]), 0.5*(w[0]/ds[w[1]]), 
+                                       -0.5*(w[0]/ds[w[1]]), 0.5*(w[0]/ds[w[1]])])
+    plt.xlabel(r"$\mathrm{Mpc} / h \/(\mathrm{comoving})$")
+    plt.ylabel(r"$\mathrm{Mpc} / h \/(\mathrm{comoving})$")
     cb = plt.colorbar()
     cb.set_label(r"$\mathrm{Density}\/\/[\mathrm{g}/\mathrm{cm}^3]$")
-    plt.savefig("figures/%s_%s.png" % (ds, field[1]))
+    plt.savefig("figures/%s_%s.png" % (ds, field[1]), dpi=150, bbox_inches='tight', pad_inches=0.1)
 
 #=======================
 #  [3] BASIC PROFILE
 #=======================
 
-sphere_radius        = 300  # kpc
-inner_radius         = 1    # kpc
-total_bins           = 128
-PI                   = 3.141592
-dlogRadius           = (np.log10(sphere_radius) - np.log10(inner_radius)) / (total_bins-1)
-prof_radius     = numpy.zeros([total_bins], float)
-prof_DM         = numpy.zeros([total_bins], float)
-prof_DM_shell   = numpy.zeros([total_bins], float)
+sphere_radius        = 200  # kpc
+inner_radius         = 0.3  # kpc
+total_bins           = 30
 
-sp = ds.h.sphere(center, (300.0, 'kpc'))
+sp = ds.h.sphere(center, (sphere_radius, 'kpc'))
 prof = BinnedProfile1D(sp, total_bins, "Radiuskpc",
                        inner_radius, sphere_radius,
                        end_collect = True)
-prof.add_fields([("all","ParticleMassMsun"), ("all", "particle_count")],
+prof.add_fields([("all","ParticleMassMsun")],
+                weight = None, accumulation=False)
+prof.add_fields([("all", "particle_count")],
                 weight = None, accumulation=True)
 prof["AverageDMDensity"] = (prof["all","ParticleMassMsun"] /
-                           ((4.0/3.0) * np.pi * prof["Radiuskpc"]**3))
+                           ((4.0/3.0) * np.pi * prof["Radiuskpc"]**3) * 6.77e-32) # g/cm^3
 
 plt.clf()
 plt.loglog(prof["Radiuskpc"], prof["AverageDMDensity"], '-k')
 plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
-plt.ylabel(r"$\mathrm{Dark}\/\mathrm{Matter}\/\mathrm{Density}\/\/[M_\odot/\mathrm{kpc}^3]$")
+plt.ylabel(r"$\mathrm{Dark}\/\mathrm{Matter}\/\mathrm{Density}\/\/[\mathrm{g}/\mathrm{cm}^3]$")
 plt.savefig("figures/%s_radprof.png" % ds)
 
 plt.clf()
