@@ -25,13 +25,13 @@ for name, method in [("CIC", "cic"), ("Density", "sum")]:
     def _func(_method):
         def finest_DM_func(field, data): # user-defined field
             filter = data["ParticleMassMsun"] <= 340000
-            pos = data["all", "Coordinates"][filter, :]
-            d = data.deposit(pos, [data["all", "Mass"][filter]],
+            pos = np.column_stack([data["particle_position_%s" % ax][filter] for ax in 'xyz'])
+            d = data.deposit(pos, [data["all", "ParticleMass"][filter]],
                              method = _method)
             d /= data["CellVolume"]
             return d
         return finest_DM_func
-    GadgetFieldInfo.add_field(("deposit", "finest_DM_%s" % name.lower()),
+    RAMSESFieldInfo.add_field(("deposit", "finest_DM_%s" % name.lower()),
                               function = _func(method),
                               validators = [ValidateSpatial()],
                               display_name = "\\mathrm{Finest DM %s}" % name,
@@ -41,11 +41,13 @@ for name, method in [("CIC", "cic"), ("Density", "sum")]:
 
 def particle_count(field, data):
     return np.ones(data["all","ParticleMass"].shape, dtype="float64")
-GadgetFieldInfo.add_field(("all", "particle_count"), function=particle_count,
+RAMSESFieldInfo.add_field(("all", "particle_count"), function=particle_count,
                           particle_type = True)
 
-center = np.array([29.7555, 32.1242, 28.2893])  # Gadget unit system: [0, 60]
-ds = GadgetStaticOutput("snapshot_010", unit_base = {"mpchcm": 1.0})
+center = np.array([0.48612499,  0.52644253,  0.49013424]) # Ramses unit system: [0, 1]
+ds = load("output_00101/info_00101.txt")
+#center = np.array([0.492979, 0.507911, 0.507273])
+#ds = load("DD0040/data0040")
 
 #=======================
 #  [1] TOTAL MASS
