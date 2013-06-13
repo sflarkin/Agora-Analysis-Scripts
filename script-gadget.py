@@ -11,45 +11,43 @@
 #
 #####################################################################
 
-import sys
-sys.path.insert(0, "/home/mornkr/yt-3.0")
+import sys, os
+for spec in ["~/yt/yt-3.0", "~/yt-3.0"]:
+    if os.path.isdir(os.path.expanduser(spec)):
+        sys.path.insert(0, os.path.expanduser(spec))
+        break
 from yt.config import ytcfg; ytcfg["yt","loglevel"] = "20"
 from yt.mods import *
-import yt.utilities.lib as au
-import numpy as np
-import copy
-import pylab
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm, Normalize
-from yt.analysis_modules.halo_finding.api import *
-from yt.geometry.oct_container import ParticleOctreeContainer
 
-def finest_DM_density(field, data): # user-defined field
-    filter = np.where(data["ParticleMassMsun"] <= 340000)
-
-    pos = data["all", "Coordinates"][filter]
-    d = data.deposit(pos, [data["all", "Mass"][filter]], method = "cic")
-    d /= data["CellVolume"]
-    return d
-GadgetFieldInfo.add_field(("deposit", "finest_DM_density"),
-                          function = finest_DM_density,
-                          validators = [ValidateSpatial()],
-                          display_name = "\\mathrm{Finest DM Density}",
-                          units = r"\mathrm{g}/\mathrm{cm}^{3}",
-                          projected_units = r"\mathrm{g}/\mathrm{cm}^{2}",
-                          projection_conversion = 'cm')
+for name, method in [("CIC", "cic"), ("Density", "sum")]:
+    def _func(_method):
+        def finest_DM_func(field, data): # user-defined field
+            filter = data["ParticleMassMsun"] <= 340000
+            pos = data["all", "Coordinates"][filter, :]
+            d = data.deposit(pos, [data["all", "Mass"][filter]],
+                             method = _method)
+            d /= data["CellVolume"]
+            return d
+        return finest_DM_func
+    GadgetFieldInfo.add_field(("deposit", "finest_DM_%s" % name.lower()),
+                              function = _func(method),
+                              validators = [ValidateSpatial()],
+                              display_name = "\\mathrm{Finest DM %s}" % name,
+                              units = r"\mathrm{g}/\mathrm{cm}^{3}",
+                              projected_units = r"\mathrm{g}/\mathrm{cm}^{2}",
+                              projection_conversion = 'cm')
 
 center = np.array([29.754, 32.14, 28.29]) # Gadget unit system: [0, 60]
 ds = GadgetStaticOutput("snapshot_010", unit_base = {"mpchcm": 1.0})
-print ds.h.derived_field_list
-
 
 #=======================
 #  [1] TOTAL MASS
 #=======================
 
 sp = ds.h.sphere(center, (1.0, 'mpc'))
-total_particle_mass = sp.quantities["TotalQuantity"]( [("all","ParticleMassMsun")] )[0]
+total_particle_mass = sp.quantities["TotalQuantity"]( ("all","ParticleMassMsun") )[0]
 print "Total particle mass within a radius of 1 Mpc of the center: %0.3e Msun" % total_particle_mass
 
 
@@ -58,17 +56,35 @@ print "Total particle mass within a radius of 1 Mpc of the center: %0.3e Msun" %
 #=======================
 
 w = (1.0, "mpch")
-source = ds.h.region(center, center - (w[0]/ds[w[1]])/2.0, center + (w[0]/ds[w[1]])/2.0)
-proj = ds.h.proj( ("deposit", "all_density"), 2, weight_field = ("deposit", "all_density"), data_source = source)
-pw = proj.to_pw(fields = [("deposit", "all_density")], center = center, width = w)
-pw.set_zlim(("deposit","all_density"), 1e-32, 1e-25)
-pw.save("snapshot_010_Projection_z_all_density_subset.png")
+axis = 2
 
-proj = ds.h.proj( ("deposit", "finest_DM_density"), 2, weight_field = ("deposit", "finest_DM_density"), data_source = source)
-pw = proj.to_pw(fields = [("deposit", "finest_DM_density")], center = center, width = w)
-pw.set_zlim(("deposit","finest_DM_density"), 1e-32, 1e-25)
-pw.save("snapshot_010_Projection_z_finest_DM_density_subset.png")
+res = [1024] * 3
+res[axis] = 16
 
+LE = center - 0.5/ds['mpch']
+RE = center + 0.5/ds['mpch']
+
+source = ds.h.arbitrary_grid(LE, RE, res)
+
+fields = [("deposit", "all_cic"), ("deposit", "finest_DM_cic")]
+
+for field in fields:
+    # Manually do this until we have a solution in place to do it from
+    # arbitrary_grid objects
+    num = (source[field] * source[field]).sum(axis=axis)
+    num *= (RE[axis] - LE[axis])*ds['cm'] # dl
+    den = (source[field]).sum(axis=axis)
+    den *= (RE[axis] - LE[axis])*ds['cm'] # dl
+    proj = (num/den)
+    plt.clf()
+    norm = LogNorm(1e-32, 1e-25)
+    plt.imshow(proj, interpolation='nearest', origin='lower',
+               norm = norm, extent = [-0.5, 0.5, -0.5, 0.5])
+    plt.xlabel(r"$\mathrm{Mpc} / h (\mathrm{comoving})$")
+    plt.ylabel(r"$\mathrm{Mpc} / h (\mathrm{comoving})$")
+    cb = plt.colorbar()
+    cb.set_label(r"$\mathrm{Density}\/\/[\mathrm{g}/\mathrm{cm}^3]$")
+    plt.savefig("figures/%s_%s.png" % (ds, field[1]))
 
 #=======================
 #  [3] BASIC PROFILE
