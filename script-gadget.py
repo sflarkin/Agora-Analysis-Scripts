@@ -16,6 +16,8 @@ for spec in ["~/yt/yt-3.0", "~/yt-3.0"]:
     if os.path.isdir(os.path.expanduser(spec)):
         sys.path.insert(0, os.path.expanduser(spec))
         break
+if not os.path.isdir("figures"):
+    os.makedirs("figures")
 from yt.config import ytcfg; ytcfg["yt","loglevel"] = "20"
 from yt.mods import *
 from yt.utilities.physical_constants import kpc_per_cm
