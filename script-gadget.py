@@ -18,6 +18,7 @@ for spec in ["~/yt/yt-3.0", "~/yt-3.0"]:
         break
 from yt.config import ytcfg; ytcfg["yt","loglevel"] = "20"
 from yt.mods import *
+from yt.utilities.physical_constants import kpc_per_cm
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm, Normalize
 
@@ -38,6 +39,11 @@ for name, method in [("CIC", "cic"), ("Density", "sum")]:
                               units = r"\mathrm{g}/\mathrm{cm}^{3}",
                               projected_units = r"\mathrm{g}/\mathrm{cm}^{2}",
                               projection_conversion = 'cm')
+
+def particle_count(field, data):
+    return np.ones(data["all","ParticleMass"].shape, dtype="float64")
+GadgetFieldInfo.add_field(("all", "particle_count"), function=particle_count,
+                          particle_type = True)
 
 center = np.array([29.754, 32.14, 28.29]) # Gadget unit system: [0, 60]
 ds = GadgetStaticOutput("snapshot_010", unit_base = {"mpchcm": 1.0})
@@ -70,7 +76,7 @@ fields = [("deposit", "all_cic"), ("deposit", "finest_DM_cic")]
 
 for field in fields:
     # Manually do this until we have a solution in place to do it from
-    # arbitrary_grid objects
+    # arbitrary_grid objects.
     num = (source[field] * source[field]).sum(axis=axis)
     num *= (RE[axis] - LE[axis])*ds['cm'] # dl
     den = (source[field]).sum(axis=axis)
@@ -92,36 +98,33 @@ for field in fields:
 
 sphere_radius        = 300  # kpc
 inner_radius         = 1    # kpc
-total_bins           = 10
+total_bins           = 128
 PI                   = 3.141592
 dlogRadius           = (np.log10(sphere_radius) - np.log10(inner_radius)) / (total_bins-1)
 prof_radius     = numpy.zeros([total_bins], float)
 prof_DM         = numpy.zeros([total_bins], float)
 prof_DM_shell   = numpy.zeros([total_bins], float)
 
-for k in range(0, total_bins):
-    prof_radius[k] = pow(10, np.log10(inner_radius) + float(k)*dlogRadius);
-    prof_sphere = ds.h.sphere(center, (prof_radius[k], 'kpc'))
-    prof_DM[k] = prof_sphere.quantities["TotalQuantity"]( [("all","ParticleMassMsun")] )[0]
-    my_sphere = ds.h.sphere(center, (sphere_radius, 'kpc'))
-    if k == 0:
-        my_shell = numpy.where(my_sphere["Radiuskpc"] < prof_radius[k])
-        prof_DM_shell[k] = prof_DM[k] / (4.0/3.0*PI*(prof_radius[k])**3) * 6.77e-32
-    else:
-        my_shell = numpy.where((my_sphere["Radiuskpc"] < prof_radius[k]) & (my_sphere["Radiuskpc"] > prof_radius[k-1]))
-        prof_DM_shell[k] = (prof_DM[k] - prof_DM[k-1]) / (4.0/3.0*PI*(prof_radius[k])**3 - (4.0/3.0*PI*(prof_radius[k-1])**3)) * 6.77e-32
+sp = ds.h.sphere(center, (300.0, 'kpc'))
+prof = BinnedProfile1D(sp, total_bins, "Radiuskpc",
+                       inner_radius, sphere_radius,
+                       end_collect = True)
+prof.add_fields([("all","ParticleMassMsun"), ("all", "particle_count")],
+                weight = None, accumulation=True)
+prof["AverageDMDensity"] = (prof["all","ParticleMassMsun"] /
+                           ((4.0/3.0) * np.pi * prof["Radiuskpc"]**3))
 
-fout = open("profile-gadget.dat","a")
-fout.write("# sphere_radius:"+str(sphere_radius)+"\n")
-fout.write("# inner_radius:"+str(inner_radius)+"\n")
-fout.write("# \n")
-fout.write("# radius(kpc)   gas_DM_enclosed(Msun)   prof_DM_shell(g/cm^3)\n")
-fout.write("# \n")
-for k in range(0, total_bins):
-    fout.write(str(prof_radius[k])+"   "+str(prof_DM[k])+"   "+str(prof_DM_shell[k]))
-    fout.write("\n")
-fout.close()
+plt.clf()
+plt.loglog(prof["Radiuskpc"], prof["AverageDMDensity"], '-k')
+plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
+plt.ylabel(r"$\mathrm{Dark}\/\mathrm{Matter}\/\mathrm{Density}\/\/[M_\odot/\mathrm{kpc}^3]$")
+plt.savefig("figures/%s_radprof.png" % ds)
 
+plt.clf()
+plt.loglog(prof["Radiuskpc"], prof["all", "particle_count"], '-k')
+plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
+plt.ylabel(r"$\mathrm{N}$")
+plt.savefig("figures/%s_pcount.png" % ds)
 
 #=======================
 #  [4] HOP HALOFINDER
