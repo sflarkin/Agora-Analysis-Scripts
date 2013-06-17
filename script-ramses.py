@@ -46,8 +46,6 @@ RAMSESFieldInfo.add_field(("all", "particle_count"), function=particle_count,
 
 center = np.array([0.48612499,  0.52644253,  0.49013424]) # Ramses unit system: [0, 1]
 ds = load("output_00101/info_00101.txt")
-#center = np.array([0.492979, 0.507911, 0.507273])
-#ds = load("DD0040/data0040")
 
 #=======================
 #  [1] TOTAL MASS
@@ -83,9 +81,9 @@ for field in fields:
     den = (source[field]).sum(axis=axis)
     den *= (RE[axis] - LE[axis])*ds['cm'] # dl
     proj = (num/den)
-    proj[proj!=proj] = colorbounds[0] # remove NaN for background
+    proj[proj!=proj] = 1e-100 # remove NaN's
     plt.clf()
-    norm = LogNorm(colorbounds[0], colorbounds[1])
+    norm = LogNorm(colorbounds[0], colorbounds[1], clip=True)
     plt.imshow(proj.swapaxes(0,1), interpolation='nearest', origin='lower',
                norm = norm, extent = [-0.5*(w[0]/ds[w[1]]), 0.5*(w[0]/ds[w[1]]), 
                                        -0.5*(w[0]/ds[w[1]]), 0.5*(w[0]/ds[w[1]])])
@@ -104,26 +102,28 @@ inner_radius         = 0.3  # kpc
 total_bins           = 30
 
 sp = ds.h.sphere(center, (sphere_radius, 'kpc'))
-prof = BinnedProfile1D(sp, total_bins, "Radiuskpc",
+prof = BinnedProfile1D(sp, total_bins, "ParticleRadiuskpc",
                        inner_radius, sphere_radius,
                        end_collect = True)
 prof.add_fields([("all","ParticleMassMsun")],
                 weight = None, accumulation=False)
 prof.add_fields([("all", "particle_count")],
                 weight = None, accumulation=True)
-prof["AverageDMDensity"] = (prof["all","ParticleMassMsun"] /
-                           ((4.0/3.0) * np.pi * prof["Radiuskpc"]**3) * 6.77e-32) # g/cm^3
+prof["AverageDMDensity"] = (prof[("all","ParticleMassMsun")] /
+                           ((4.0/3.0) * np.pi * prof["ParticleRadiuskpc"]**3) * 6.77e-32) # g/cm^3
 
 plt.clf()
-plt.loglog(prof["Radiuskpc"], prof["AverageDMDensity"], '-k')
+plt.loglog(prof["ParticleRadiuskpc"], prof["AverageDMDensity"], '-k')
 plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
 plt.ylabel(r"$\mathrm{Dark}\/\mathrm{Matter}\/\mathrm{Density}\/\/[\mathrm{g}/\mathrm{cm}^3]$")
+plt.ylim(1e-29, 1e-23)
 plt.savefig("figures/%s_radprof.png" % ds)
 
 plt.clf()
-plt.loglog(prof["Radiuskpc"], prof["all", "particle_count"], '-k')
+plt.loglog(prof["ParticleRadiuskpc"], prof["all", "particle_count"], '-k')
 plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
 plt.ylabel(r"$\mathrm{N}$")
+plt.ylim(1, 1e6)
 plt.savefig("figures/%s_pcount.png" % ds)
 
 #=======================

@@ -81,9 +81,9 @@ for field in fields:
     den = (source[field]).sum(axis=axis)
     den *= (RE[axis] - LE[axis])*ds['cm'] # dl
     proj = (num/den)
-    proj[proj!=proj] = colorbounds[0] # remove NaN for background
+    proj[proj!=proj] = 1e-100 # remove NaN's
     plt.clf()
-    norm = LogNorm(colorbounds[0], colorbounds[1])
+    norm = LogNorm(colorbounds[0], colorbounds[1], clip=True)
     plt.imshow(proj.swapaxes(0,1), interpolation='nearest', origin='lower',
                norm = norm, extent = [-0.5*(w[0]/ds[w[1]]), 0.5*(w[0]/ds[w[1]]), 
                                        -0.5*(w[0]/ds[w[1]]), 0.5*(w[0]/ds[w[1]])])
@@ -109,19 +109,21 @@ prof.add_fields([("all","ParticleMassMsun")],
                 weight = None, accumulation=False)
 prof.add_fields([("all", "particle_count")],
                 weight = None, accumulation=True)
-prof["AverageDMDensity"] = (prof["all","ParticleMassMsun"] /
+prof["AverageDMDensity"] = (prof[("all","ParticleMassMsun")] /
                            ((4.0/3.0) * np.pi * prof["Radiuskpc"]**3) * 6.77e-32) # g/cm^3
 
 plt.clf()
 plt.loglog(prof["Radiuskpc"], prof["AverageDMDensity"], '-k')
 plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
 plt.ylabel(r"$\mathrm{Dark}\/\mathrm{Matter}\/\mathrm{Density}\/\/[\mathrm{g}/\mathrm{cm}^3]$")
+plt.ylim(1e-29, 1e-23)
 plt.savefig("figures/%s_radprof.png" % ds)
 
 plt.clf()
 plt.loglog(prof["Radiuskpc"], prof["all", "particle_count"], '-k')
 plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
 plt.ylabel(r"$\mathrm{N}$")
+plt.ylim(1, 1e6)
 plt.savefig("figures/%s_pcount.png" % ds)
 
 #=======================
