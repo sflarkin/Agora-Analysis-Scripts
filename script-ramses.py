@@ -109,8 +109,13 @@ prof.add_fields([("all","ParticleMassMsun")],
                 weight = None, accumulation=False)
 prof.add_fields([("all", "particle_count")],
                 weight = None, accumulation=True)
-prof["AverageDMDensity"] = (prof[("all","ParticleMassMsun")] /
-                           ((4.0/3.0) * np.pi * prof["ParticleRadiuskpc"]**3) * 6.77e-32) # g/cm^3
+prof["AverageDMDensity"] = prof[("all","ParticleMassMsun")] * 6.77e-32
+for k in range(0, len(prof["AverageDMDensity"])):
+    if k == 0:
+        prof["AverageDMDensity"][k] /= ((4.0/3.0) * np.pi * prof["ParticleRadiuskpc"][k]**3)  # g/cm^3
+    else:
+        prof["AverageDMDensity"][k] /= ((4.0/3.0) * np.pi * 
+                                        (prof["ParticleRadiuskpc"][k]**3-prof["ParticleRadiuskpc"][k-1]**3))
 
 plt.clf()
 plt.loglog(prof["ParticleRadiuskpc"], prof["AverageDMDensity"], '-k')
@@ -133,7 +138,7 @@ plt.savefig("figures/%s_pcount.png" % ds)
 # halos = HaloFinder(ds, subvolume = source, threshold=80.)
 # print halos[0].center_of_mass() 
 # print halos[0].total_mass()
-# halos.dump("./MergerHalos-gadget")
+# halos.dump("./%s_MergerHalos" % ds)
 # pw = ProjectionPlot(ds, "z", ("deposit", "all_density"), weight_field=None, center=center, width=(1.0,'mpch'))
 # pw.annotate_hop_circles(halos)
 # pw.save()
