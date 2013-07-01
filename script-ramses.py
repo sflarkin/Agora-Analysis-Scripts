@@ -56,7 +56,7 @@ RAMSESFieldInfo.add_field(("all", "particle_count"), function=particle_count,
 
 #center = np.array([ 0.49297869, 0.50791068, 0.50727271]) # Enzo unit system: [0, 1]
 #ds = load("DD0040/data0040")
-center = np.array([ 0.4861241, 0.52643877, 0.49013741]) # Ramses unit system: [0, 1]
+center = np.array([ 0.48598457, 0.52665735, 0.48984628]) # Ramses unit system: [0, 1]
 ds = load("output_00101/info_00101.txt")
 
 #=======================
