@@ -3,6 +3,7 @@
 #  AGORA SCRIPT
 #  
 #  PLEASE SEE:  https://hub.yt-project.org/nb/5zw7qn
+#               https://hub.yt-project.org/nb/tzeizy
 #
 #  FOR SCRIPT HISTORY SEE VERSION CONTROL CHANGELOG
 #
@@ -31,6 +32,13 @@ for name, method in [("CIC", "cic"), ("Density", "sum")]:
             d /= data["CellVolume"]
             return d
         return finest_DM_func
+    EnzoFieldInfo.add_field(("deposit", "finest_DM_%s" % name.lower()),
+                              function = _func(method),
+                              validators = [ValidateSpatial()],
+                              display_name = "\\mathrm{Finest DM %s}" % name,
+                              units = r"\mathrm{g}/\mathrm{cm}^{3}",
+                              projected_units = r"\mathrm{g}/\mathrm{cm}^{2}",
+                              projection_conversion = 'cm')
     RAMSESFieldInfo.add_field(("deposit", "finest_DM_%s" % name.lower()),
                               function = _func(method),
                               validators = [ValidateSpatial()],
@@ -41,10 +49,14 @@ for name, method in [("CIC", "cic"), ("Density", "sum")]:
 
 def particle_count(field, data):
     return np.ones(data["all","ParticleMass"].shape, dtype="float64")
+EnzoFieldInfo.add_field(("all", "particle_count"), function=particle_count,
+                          particle_type = True)
 RAMSESFieldInfo.add_field(("all", "particle_count"), function=particle_count,
                           particle_type = True)
 
-center = np.array([0.48612499,  0.52644253,  0.49013424]) # Ramses unit system: [0, 1]
+#center = np.array([ 0.49297869, 0.50791068, 0.50727271]) # Enzo unit system: [0, 1]
+#ds = load("DD0040/data0040")
+center = np.array([ 0.4861241, 0.52643877, 0.49013741]) # Ramses unit system: [0, 1]
 ds = load("output_00101/info_00101.txt")
 
 #=======================

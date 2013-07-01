@@ -44,7 +44,7 @@ def particle_count(field, data):
 GadgetFieldInfo.add_field(("all", "particle_count"), function=particle_count,
                           particle_type = True)
 
-center = np.array([29.7555, 32.1242, 28.2893])  # Gadget unit system: [0, 60]
+center = np.array([ 29.75540543, 32.12417221, 28.28912735])  # Gadget unit system: [0, 60]
 ds = GadgetStaticOutput("snapshot_010", unit_base = {"mpchcm": 1.0})
 
 #=======================
