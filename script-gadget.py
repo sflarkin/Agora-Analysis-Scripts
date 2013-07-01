@@ -26,7 +26,7 @@ for name, method in [("CIC", "cic"), ("Density", "sum")]:
         def finest_DM_func(field, data): # user-defined field
             filter = data["ParticleMassMsun"] <= 340000
             pos = data["all", "Coordinates"][filter, :]
-            d = data.deposit(pos, [data["all", "Mass"][filter]],
+            d = data.deposit(pos, [data["all", "ParticleMass"][filter]],
                              method = _method)
             d /= data["CellVolume"]
             return d
