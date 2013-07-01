@@ -102,7 +102,7 @@ inner_radius         = 0.3  # kpc
 total_bins           = 30
 
 sp = ds.h.sphere(center, (sphere_radius, 'kpc'))
-prof = BinnedProfile1D(sp, total_bins, "Radiuskpc",
+prof = BinnedProfile1D(sp, total_bins, "ParticleRadiuskpc",
                        inner_radius, sphere_radius,
                        end_collect = True)
 prof.add_fields([("all","ParticleMassMsun")],
@@ -112,20 +112,20 @@ prof.add_fields([("all", "particle_count")],
 prof["AverageDMDensity"] = prof[("all","ParticleMassMsun")] * 6.77e-32
 for k in range(0, len(prof["AverageDMDensity"])):
     if k == 0:
-        prof["AverageDMDensity"][k] /= ((4.0/3.0) * np.pi * prof["Radiuskpc"][k]**3)  # g/cm^3
+        prof["AverageDMDensity"][k] /= ((4.0/3.0) * np.pi * prof["ParticleRadiuskpc"][k]**3)  # g/cm^3
     else:
         prof["AverageDMDensity"][k] /= ((4.0/3.0) * np.pi * 
-                                        (prof["Radiuskpc"][k]**3-prof["Radiuskpc"][k-1]**3))
+                                        (prof["ParticleRadiuskpc"][k]**3-prof["ParticleRadiuskpc"][k-1]**3))
 
 plt.clf()
-plt.loglog(prof["Radiuskpc"], prof["AverageDMDensity"], '-k')
+plt.loglog(prof["ParticleRadiuskpc"], prof["AverageDMDensity"], '-k')
 plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
 plt.ylabel(r"$\mathrm{Dark}\/\mathrm{Matter}\/\mathrm{Density}\/\/[\mathrm{g}/\mathrm{cm}^3]$")
 plt.ylim(1e-29, 1e-23)
 plt.savefig("figures/%s_radprof.png" % ds)
 
 plt.clf()
-plt.loglog(prof["Radiuskpc"], prof["all", "particle_count"], '-k')
+plt.loglog(prof["ParticleRadiuskpc"], prof["all", "particle_count"], '-k')
 plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
 plt.ylabel(r"$\mathrm{N}$")
 plt.ylim(1, 1e6)
