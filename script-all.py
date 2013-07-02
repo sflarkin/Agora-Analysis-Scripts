@@ -43,7 +43,7 @@ if do_ramses:
 if do_gadget:
     ds_gadget = GadgetStaticOutput("snapshot_010", unit_base = {"mpchcm": 1.0})
     ds_gadget.add_particle_filter("finest")
-    center = np.array([ 29.75540543, 32.12417221, 28.28912735])  # Gadget unit system: [0, 60]
+    center = np.array([ 29.75540543, 32.12417221, 28.28912735])
     process_dataset(ds_gadget, center)
 
 if do_gasoline:
@@ -64,7 +64,7 @@ if do_pkdgrav:
         cosmology_parameters = cosmology_parameters,
         unit_base = {'mpchcm': 1.0/60.0})
     ds_pkdgrav.add_particle_filter("finest")
-    center = np.array([0.00914883, 0.0242125, -0.04274633])
+    center = np.array([-0.01434195, 0.027505, -0.01086525])
     process_dataset(ds_pkdgrav, center)
 
 if do_enzo:
