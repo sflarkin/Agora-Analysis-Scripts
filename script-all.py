@@ -3,33 +3,18 @@ for spec in ["~/yt/yt-3.0", "~/yt-3.0"]:
     if os.path.isdir(os.path.expanduser(spec)):
         sys.path.insert(0, os.path.expanduser(spec))
         break
-if not os.path.isdir("figures"):
-    os.makedirs("figures")
+
+if not os.path.isdir("images"): os.makedirs("images")
 from yt.config import ytcfg; ytcfg["yt","loglevel"] = "20"
 from yt.mods import *
-from yt.utilities.physical_constants import kpc_per_cm
 from yt.data_objects.particle_filters import \
         particle_filter, filter_registry
 from yt.data_objects.particle_fields import \
-        particle_deposition_functions, \
-        particle_scalar_functions, \
-        particle_vector_functions 
+        particle_deposition_functions
 
 @particle_filter("finest", ["ParticleMassMsun"])
 def finest(pfilter, data):
     return data["ParticleMassMsun"] < 340000
-
-@derived_field(name=("deposit", "finest_density"),
-               validators = [ValidateSpatial()],
-               display_name = "\\mathrm{Finest DM %s}" % name,
-               units = r"\mathrm{g}/\mathrm{cm}^{3}",
-               projected_units = r"\mathrm{g}/\mathrm{cm}^{2}",
-               projection_conversion = 'cm')
-def finest_deposit(field, data):
-    pos = data["finest", "Coordinates"]
-    d = data.deposit(pos, [data["finest","ParticleMassMsun"]], method="sum")
-    return d / data["CellVolume"]
-
 
 def process_dataset(ds, center):
     
