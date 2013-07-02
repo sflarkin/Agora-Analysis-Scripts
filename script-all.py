@@ -28,38 +28,21 @@ def process_dataset(ds, center):
         t2 = time.time()
         print "Took %0.3e for %s" % (t2-t1, ptype)
 
-fo = filter_registry["finest"][0]
-
 do_enzo = True
 do_ramses = True
 do_gadget = True
 do_gasoline = True
 do_pkdgrav = True
 
-if do_enzo:
-    ds_enzo = load("DD0040/data0040")
-    ds_enzo.add_particle_filter(fo)
-    df = particle_deposition_functions("finest",
-        "Coordinates", "ParticleMass", EnzoFieldInfo)
-    ds_enzo.h._derived_fields_add(df)
-    center = np.array([ 0.49297869, 0.50791068, 0.50727271])
-    process_dataset(ds_enzo, center)
-
 if do_ramses:
     ds_ramses = load("output_00101/info_00101.txt")
-    ds_ramses.add_particle_filter(fo)
-    df = particle_deposition_functions("finest",
-        "Coordinates", "ParticleMass", RAMSESFieldInfo)
-    ds_ramses.h._derived_fields_add(df)
+    ds_ramses.add_particle_filter("finest")
     center = np.array([ 0.48598457, 0.52665735, 0.48984628])
     process_dataset(ds_ramses, center)
 
 if do_gadget:
     ds_gadget = GadgetStaticOutput("snapshot_010", unit_base = {"mpchcm": 1.0})
-    ds_gadget.add_particle_filter(fo)
-    df = particle_deposition_functions("finest",
-        "Coordinates", "Mass", GadgetFieldInfo)
-    ds_gadget.h._derived_fields_add(df)
+    ds_gadget.add_particle_filter("finest")
     center = np.array([ 29.75540543, 32.12417221, 28.28912735])  # Gadget unit system: [0, 60]
     process_dataset(ds_gadget, center)
 
@@ -69,10 +52,7 @@ if do_gasoline:
     ds_gasoline = TipsyStaticOutput("agora_1e11.00400",
         cosmology_parameters = cosmology_parameters,
         unit_base = {'mpchcm': 1.0/60.0})
-    ds_gasoline.add_particle_filter(fo)
-    df = particle_deposition_functions("finest",
-        "Coordinates", "Mass", TipsyFieldInfo)
-    ds_gasoline.h._derived_fields_add(df)
+    ds_gasoline.add_particle_filter("finest")
     center = np.array([-0.014738, 0.026979, -0.010535])
     process_dataset(ds_gasoline, center)
 
@@ -83,9 +63,13 @@ if do_pkdgrav:
         field_dtypes = {"Coordinates": "d"},
         cosmology_parameters = cosmology_parameters,
         unit_base = {'mpchcm': 1.0/60.0})
-    ds_pkdgrav.add_particle_filter(fo)
-    df = particle_deposition_functions("finest",
-        "Coordinates", "Mass", TipsyFieldInfo)
-    ds_pkdgrav.h._derived_fields_add(df)
+    ds_pkdgrav.add_particle_filter("finest")
     center = np.array([0.00914883, 0.0242125, -0.04274633])
     process_dataset(ds_pkdgrav, center)
+
+if do_enzo:
+    ds_enzo = load("DD0040/data0040")
+    ds_enzo.add_particle_filter("finest")
+    center = np.array([ 0.49297869, 0.50791068, 0.50727271])
+    process_dataset(ds_enzo, center)
+
