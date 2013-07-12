@@ -84,7 +84,8 @@ if do_particles:
     f = h5py.File("s11Qzm1h2_a1.0000.art.h5")
     data = dict((k, f[k][:].astype("float64")) for k in f)
     bbox = np.array([[0.0, 128.0], [0.0, 128.0], [0.0, 128.0]])
-    ds_particles = load_particles(data, 1.0, bbox=bbox)
+    data["particle_mass"] *= 2.2023338912587828e+43 # Convert to grams
+    ds_particles = load_particles(data, 2.0604661199638546e+24, bbox=bbox)
     ds_particles.add_particle_filter("finest")
     particle_vector_functions("all",
         ["particle_position_%s" % ax for ax in 'xyz'],
