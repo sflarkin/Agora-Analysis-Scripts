@@ -5,12 +5,18 @@ for spec in ["~/yt/yt-3.0", "~/yt-3.0"]:
         break
 
 if not os.path.isdir("images"): os.makedirs("images")
+import h5py
 from yt.config import ytcfg; ytcfg["yt","loglevel"] = "20"
 from yt.mods import *
 from yt.data_objects.particle_filters import \
         particle_filter, filter_registry
 from yt.data_objects.particle_fields import \
         particle_deposition_functions
+from yt.frontends.stream.data_structures import \
+        load_particles
+from yt.data_objects.particle_fields import \
+    particle_deposition_functions, \
+    particle_vector_functions
 
 @particle_filter("finest", ["ParticleMassMsun"])
 def finest(pfilter, data):
@@ -28,11 +34,12 @@ def process_dataset(ds, center):
         t2 = time.time()
         print "Took %0.3e for %s" % (t2-t1, ptype)
 
-do_enzo = True
-do_ramses = True
-do_gadget = True
-do_gasoline = True
-do_pkdgrav = True
+do_enzo = False
+do_ramses = False
+do_gadget = False
+do_gasoline = False
+do_pkdgrav = False
+do_particles = True
 
 if do_ramses:
     ds_ramses = load("output_00101/info_00101.txt")
@@ -73,3 +80,24 @@ if do_enzo:
     center = np.array([ 0.49297869, 0.50791068, 0.50727271])
     process_dataset(ds_enzo, center)
 
+if do_particles:
+    f = h5py.File("s11Qzm1h2_a1.0000.art.h5")
+    data = dict((k, f[k][:].astype("float64")) for k in f)
+    bbox = np.array([[0.0, 128.0], [0.0, 128.0], [0.0, 128.0]])
+    ds_particles = load_particles(data, 1.0, bbox=bbox)
+    ds_particles.add_particle_filter("finest")
+    particle_vector_functions("all",
+        ["particle_position_%s" % ax for ax in 'xyz'],
+        ["particle_velocity_%s" % ax for ax in 'xyz'],
+        StreamFieldInfo)
+    particle_vector_functions("finest",
+        ["particle_position_%s" % ax for ax in 'xyz'],
+        ["particle_velocity_%s" % ax for ax in 'xyz'],
+        StreamFieldInfo)
+    particle_deposition_functions("all",
+        "Coordinates", "particle_mass", StreamFieldInfo)
+    particle_deposition_functions("finest",
+        "Coordinates", "particle_mass", StreamFieldInfo)
+    center = np.array([0.492470,  0.533444,  0.476942]) 
+    center *= 128
+    process_dataset(ds_particles, center)
