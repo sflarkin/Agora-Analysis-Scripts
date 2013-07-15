@@ -35,12 +35,19 @@ def finest(pfilter, data):
 
 def main():
     # CHOOSE DATASETS YOU WANT TO PROCESS
-    do_enzo = True
+    do_art2 = False
+    do_enzo = False
     do_ramses = False
     do_gadget = False
     do_gasoline = False
     do_pkdgrav = False
     do_particles = False
+
+    if do_art2:
+        ds_art2 = load("A11QR1/s11Qzm1h2_a1.0000.art")
+        ds_art2.add_particle_filter("finest")
+        center = 128 * np.array([0.492470,  0.533444,  0.476942]) 
+        process_dataset(ds_art2, center)
 
     if do_enzo:
         ds_enzo = load("./DD0040/data0040")
