@@ -167,14 +167,9 @@ def process_dataset(ds, center):
     prof.add_fields([("all","ParticleMassMsun")],
                     weight = None, accumulation=False)
     prof["AverageDMDensity"] = prof[("all","ParticleMassMsun")] * 6.77e-32
-    for k in range(0, len(prof["AverageDMDensity"])): # g/cm^3
-        if k == 0:
-            prof["AverageDMDensity"][k] /= ((4.0/3.0)*np.pi*prof["ParticleRadiuskpc"][k]**3)  
-        else:
-            prof["AverageDMDensity"][k] /= ((4.0/3.0)*np.pi* \
-                                            (prof["ParticleRadiuskpc"][k]**3 - \
-                                             prof["ParticleRadiuskpc"][k-1]**3))
-
+    shell_volume = prof["ParticleRadiuskpc"]**3.0 * (4.0/3.0)*np.pi
+    shell_volume[1:] -= shell_volume[0:-1]
+    prof["AverageDMDensity"] /= shell_volume
     plt.clf()
     plt.loglog(prof["ParticleRadiuskpc"], prof["AverageDMDensity"], '-k')
     plt.xlabel(r"$\mathrm{Radius}\/\/[\mathrm{kpc}]$")
