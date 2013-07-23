@@ -40,8 +40,10 @@ def register_output_function(func):
 
 @register_output_function
 def do_art2():
-    ds_art2 = load("./A11QR1/s11Qzm1h2_a1.0000.art")
-    center = 128 * np.array([0.492470,  0.533444,  0.476942]) 
+    ds_art2 = ARTIOStaticOutput("../RUN.4R4/agora.nb_a1.0018.art")
+    center = np.array([63.05873108, 68.22652435, 61.08340073])
+    #ds_art2 = load("./A11QR1/s11Qzm1h2_a1.0000.art")
+    #center = 128 * np.array([0.492470,  0.533444,  0.476942]) 
     ds_art2.add_particle_filter("finest")
     process_dataset(ds_art2, center)
     return ds_art2
@@ -94,7 +96,8 @@ def do_pkdgrav():
 
 @register_output_function
 def do_particles():
-    f = h5py.File("./s11Qzm1h2_a1.0000.art.h5")
+    f = h5py.File("../agora.nb_a1.0018.art.h5")
+    #f = h5py.File("../s11Qzm1h2_a1.0000.art.h5")
     data = dict((k, f[k][:].astype("float64")) for k in f)
     bbox = np.array([[0.0, 128.0], [0.0, 128.0], [0.0, 128.0]])
     data["particle_mass"] *= 2.2023338912587828e+43 # Convert to grams
@@ -205,8 +208,7 @@ def process_dataset(ds, center):
     #  [5] HOP HALOFINDER
     #=======================
     if os.path.exists("./images/%s_MergerHalos.out" % ds) == False:
-        omega_matter = 0.272
-        halos = HaloFinder(ds, threshold = omega_matter*360)
+        halos = HaloFinder(ds, threshold = 80)
         halos.write_out("./images/%s_MergerHalos.out" % ds)
         
         field = ("deposit", "finest_density")
