@@ -32,27 +32,6 @@ filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_
   	     ['./GEAR/snapshot_0000', './GEAR/snapshot_0500'],
  	     ['./GIZMO/snapshot_000', './GIZMO/snapshot_100_hsml'],
  	     ['./RAMSES/output_00001/info_00001.txt', './RAMSES/output_00068/info_00068.txt']]
-# codes = ['ART-I']
-# filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_02350.d']]
-# codes = ['ART-II']
-# filenames = [['./ART-II/noSF_aggrRef/OUT/AGORA_LOW_000000.art', './ART-II/noSF_aggrRef/OUT/AGORA_LOW_000084.art']]
-# codes = ['CHANGA']
-# filenames = [['./CHANGA/disklow/disklow.000000', './CHANGA/disklow/disklow.000500']]
-# codes = ['ENZO']
-# filenames = [['./ENZO/DD0000/DD0000', './ENZO/DD0100/DD0100']]
-# codes = ['GADGET-3']
-# filenames = [['./GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', './GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5']]
-# codes = ['GASOLINE']
-# filenames = [['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_Zsolar_0Myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_Zsolar.00335']]
-# codes = ['GEAR']
-# filenames = [['./GEAR/snapshot_0000', './GEAR/snapshot_0500']]
-# codes = ['GIZMO']
-# filenames = [['./GIZMO/snapshot_000', './GIZMO/snapshot_100_hsml']]
-# codes = ['RAMSES']
-# filenames = [['./RAMSES/output_00001/info_00001.txt', './RAMSES/output_00068/info_00068.txt']] 
-# codes = ['ART-I', 'ART-II']
-# filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_02350.d'],
-# 	     ['./ART-II/noSF_aggrRef/OUT/AGORA_LOW_000000.art', './ART-II/noSF_aggrRef/OUT/AGORA_LOW_000084.art']]
 gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 			    'UnitMass_in_g'            :   1.989e+43,
 			    'UnitVelocity_in_cm_per_s' :      100000}
@@ -87,7 +66,7 @@ for time in range(len(times)):
 for time in range(len(times)):
 	for code in range(len(codes)):
 		# LOAD DATASETS
-		if codes[code] == 'ART-I': # ART frontend fails to find the accompanying files, so we specify them; see http://yt-project.org/docs/dev/examining/loading_data.html#art-data
+		if codes[code] == 'ART-I': 
 			dirnames = filenames[code][time][:filenames[code][time].rfind('/')+1]
 			if time == 0:
 				timestamp = ''
@@ -138,7 +117,7 @@ for time in range(len(times)):
 				return np.exp(logT)
 				
 			def _temperature_2(field, data):  # the pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting yt/frontends/ramses/fields.py)
-				T_J = 1800.0  # in K, see Paper 4 README: https://www.dropbox.com/sh/1xzt1rysy9v3a9l/AACZ-fbF1TfaQODCVtduXjFIa/readme.txt?dl=0, and Eq.3 of Agertz et al. 2009
+				T_J = 1800.0  # in K
 				n_J = 8.0     # in H/cc
 				gamma_0 = 2.0 
 				x_H = 0.76
@@ -241,7 +220,6 @@ for time in range(len(times)):
 			plot3.figure = fig_PDF[time]
 			plot3.axes = grid_PDF[time][code].axes
 			if code == 0: plot3.cax = grid_PDF[time].cbar_axes[0]
-			# plot3.axes.set_aspect(1e-25) 
 
 			p3._setup_plots()
 
