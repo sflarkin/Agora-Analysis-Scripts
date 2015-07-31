@@ -89,7 +89,7 @@ for time in range(len(times)):
 		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
 
 		# ADDITIONAL FIELDS: TEMPERATURE FIELDS FOR CERTAIN CODES
-		# Ramses units currently not being well implemented; for Ramses to work I made 3 changes in set_code_unit_attributes() of yt/frontend/ramses/data_structures.py
+		# As of July 2015 Ramses units have ongoing issues in yt-3.2; see https://bitbucket.org/yt_analysis/yt/issues/1055/ramses-units-error-with-boxlen-1 
                 if codes[code] == 'RAMSES': 
 			# from utilities:convenience.py:   Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
 			def calc_mu_table_local(temperature):
