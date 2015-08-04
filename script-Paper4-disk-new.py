@@ -28,7 +28,7 @@ filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_
 	     ['./CHANGA/disklow/disklow.000000', './CHANGA/disklow/disklow.000500'], 
 	     ['./ENZO/DD0000/DD0000', './ENZO/DD0100/DD0100'],
  	     ['./GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', './GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5'],
- 	     ['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_Zsolar_0Myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_Zsolar.00335'],
+ 	     ['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_Zsolar_0Myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335'],
   	     ['./GEAR/snapshot_0000', './GEAR/snapshot_0500'],
  	     ['./GIZMO/snapshot_000', './GIZMO/snapshot_100_hsml'],
  	     ['./RAMSES/output_00001/info_00001.txt', './RAMSES/output_00068/info_00068.txt']]
@@ -73,7 +73,7 @@ for time in range(len(times)):
 			else:
 				timestamp = filenames[code][time][filenames[code][time].rfind('_'):filenames[code][time].rfind('.')] 
 			pf = load(filenames[code][time], file_particle_header=dirnames+'PMcrd'+timestamp+'.DAT', file_particle_data=dirnames+'PMcrs0'+timestamp+'.DAT', file_particle_stars=dirnames+'stars'+timestamp+'.dat')
-	        elif codes[code] == 'CHANGA' or codes[code] == 'GASOLINE': 
+	        elif codes[code] == 'CHANGA' or codes[code] == 'GASOLINE': # For TIPSY frontend, always make sure to place your parameter file in the same directory as your datasets
 			pf = load(filenames[code][time], n_ref=n_ref, over_refine_factor=over_refine_factor)
 	        elif codes[code] == 'GADGET-3':
 			pf = load(filenames[code][time], unit_base = gadget_default_unit_base, bounding_box=[[-1000.0, 1000.0], [-1000.0, 1000.0], [-1000.0,1000.0]], n_ref=n_ref, over_refine_factor=over_refine_factor)
@@ -89,7 +89,7 @@ for time in range(len(times)):
 		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
 
 		# ADDITIONAL FIELDS: TEMPERATURE FIELDS FOR CERTAIN CODES
-		# As of July 2015 Ramses units have ongoing issues in yt-3.2; see https://bitbucket.org/yt_analysis/yt/issues/1055/ramses-units-error-with-boxlen-1 
+		# As of July 2015 Ramses units have ongoing issues in yt-3.2; see https://bitbucket.org/yt_analysis/yt/issues/1055/ramses-units-error-with-boxlen-1
                 if codes[code] == 'RAMSES': 
 			# from utilities:convenience.py:   Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
 			def calc_mu_table_local(temperature):
@@ -117,16 +117,20 @@ for time in range(len(times)):
 				return np.exp(logT)
 				
 			def _temperature_2(field, data):  # the pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting yt/frontends/ramses/fields.py)
+                                                          # because RAMSES unit assignments are now very confusing (Issue #1055 and others), I will just do it in my own way.  
 				T_J = 1800.0  # in K
 				n_J = 8.0     # in H/cc
 				gamma_0 = 2.0 
-				x_H = 0.76
+				x_H = 0.76    
+				mH = 1.66e-24      # from pymses/utils/constants/__init__.py  (vs. in yt, mass_hydrogen_cgs = 1.007947*amu_cgs = 1.007947*1.660538921e-24 = 1.6737352e-24)
+				kB = 1.3806504e-16 # from pymses/utils/constants/__init__.py  (vs. in yt, boltzmann_constant_cgs = 1.3806488e-16)
 				if time != 0:
-					T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * constants.mass_hydrogen_cgs.d/constants.boltzmann_constant_cgs.d \
-					    - T_J * (data["gas", "density"].d * x_H /constants.mass_hydrogen_cgs.d / n_J)**(gamma_0 - 1.0) # T/mu = T2 in Ramses
+					T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB  \
+				  	     - T_J * (data["gas", "density"].d * x_H / mH / n_J)**(gamma_0 - 1.0) # T/mu = T2 in Ramses
 				else:
-					T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * constants.mass_hydrogen_cgs.d/constants.boltzmann_constant_cgs.d  # no pressure support in IC
+				  	T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB # IC: no pressure support
 				return YTArray(convert_T_over_mu_to_T(T_over_mu), "K") # now T
+
 		        pf.add_field(("gas", "temperature_2"), function=_temperature_2, units="K")
 
 		# AXIS SWAP
