@@ -28,7 +28,7 @@ filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_
 	     ['./CHANGA/disklow/disklow.000000', './CHANGA/disklow/disklow.000500'], 
 	     ['./ENZO/DD0000/DD0000', './ENZO/DD0100/DD0100'],
  	     ['./GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', './GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5'],
- 	     ['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_Zsolar_0Myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335'],
+ 	     ['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335'],
   	     ['./GEAR/snapshot_0000', './GEAR/snapshot_0500'],
  	     ['./GIZMO/snapshot_000', './GIZMO/snapshot_100_hsml'],
  	     ['./RAMSES/output_00001/info_00001.txt', './RAMSES/output_00068/info_00068.txt']]
@@ -125,8 +125,7 @@ for time in range(len(times)):
 				mH = 1.66e-24      # from pymses/utils/constants/__init__.py  (vs. in yt, mass_hydrogen_cgs = 1.007947*amu_cgs = 1.007947*1.660538921e-24 = 1.6737352e-24)
 				kB = 1.3806504e-16 # from pymses/utils/constants/__init__.py  (vs. in yt, boltzmann_constant_cgs = 1.3806488e-16)
 				if time != 0:
-					T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB  \
-				  	     - T_J * (data["gas", "density"].d * x_H / mH / n_J)**(gamma_0 - 1.0) # T/mu = T2 in Ramses
+					T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB - T_J * (data["gas", "density"].d * x_H / mH / n_J)**(gamma_0 - 1.0) # T/mu = T2 in Ramses
 				else:
 				  	T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB # IC: no pressure support
 				return YTArray(convert_T_over_mu_to_T(T_over_mu), "K") # now T
