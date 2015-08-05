@@ -32,6 +32,24 @@ filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_
   	     ['./GEAR/snapshot_0000', './GEAR/snapshot_0500'],
  	     ['./GIZMO/snapshot_000', './GIZMO/snapshot_100_hsml'],
  	     ['./RAMSES/output_00001/info_00001.txt', './RAMSES/output_00068/info_00068.txt']]
+# codes = ['ART-I']
+# filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_02350.d']]
+# codes = ['ART-II']
+# filenames = [['./ART-II/noSF_aggrRef/OUT/AGORA_LOW_000000.art', './ART-II/noSF_aggrRef/OUT/AGORA_LOW_000084.art']]
+# codes = ['CHANGA']
+# filenames = [['./CHANGA/disklow/disklow.000000', './CHANGA/disklow/disklow.000500']]
+# codes = ['ENZO']
+# filenames = [['./ENZO/DD0000/DD0000', './ENZO/DD0100/DD0100']]
+# codes = ['GADGET-3']
+# filenames = [['./GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', './GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5']]
+# codes = ['GASOLINE']
+# filenames = [['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335']]
+# codes = ['GEAR']
+# filenames = [['./GEAR/snapshot_0000', './GEAR/snapshot_0500']]
+# codes = ['GIZMO']
+# filenames = [['./GIZMO/snapshot_000', './GIZMO/snapshot_100_hsml']]
+# codes = ['RAMSES']
+# filenames = [['./RAMSES/output_00001/info_00001.txt', './RAMSES/output_00068/info_00068.txt']] 
 gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 			    'UnitMass_in_g'            :   1.989e+43,
 			    'UnitVelocity_in_cm_per_s' :      100000}
@@ -66,7 +84,7 @@ for time in range(len(times)):
 for time in range(len(times)):
 	for code in range(len(codes)):
 		# LOAD DATASETS
-		if codes[code] == 'ART-I': 
+		if codes[code] == 'ART-I': # ART frontend fails to find the accompanying files, so we specify them; see http://yt-project.org/docs/dev/examining/loading_data.html#art-data
 			dirnames = filenames[code][time][:filenames[code][time].rfind('/')+1]
 			if time == 0:
 				timestamp = ''
@@ -88,8 +106,7 @@ for time in range(len(times)):
 			return data[("gas", "density")]**2
 		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
 
-		# ADDITIONAL FIELDS: TEMPERATURE FIELDS FOR CERTAIN CODES
-		# As of July 2015 Ramses units have ongoing issues in yt-3.2; see https://bitbucket.org/yt_analysis/yt/issues/1055/ramses-units-error-with-boxlen-1
+		# ADDITIONAL FIELDS: TEMPERATURE FIELDS FOR CERTAIN CODES, 
                 if codes[code] == 'RAMSES': 
 			# from utilities:convenience.py:   Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
 			def calc_mu_table_local(temperature):
@@ -115,9 +132,9 @@ for time in range(len(times)):
 				logT_over_mu = np.log(T_over_mu)
 				logT = np.interp(logT_over_mu, np.log(T_over_mu_values), np.log(temperature_values)) # linear interpolation in log-log space
 				return np.exp(logT)
-				
-			def _temperature_2(field, data):  # the pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting yt/frontends/ramses/fields.py)
-                                                          # because RAMSES unit assignments are now very confusing (Issue #1055 and others), I will just do it in my own way.  
+			# the pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting yt/frontends/ramses/fields.py)
+			# because RAMSES unit assignments are now very confusing (Issue #1055 and others), I will just do it in my own way.  
+			def _temperature_2(field, data):  
 				T_J = 1800.0  # in K
 				n_J = 8.0     # in H/cc
 				gamma_0 = 2.0 
@@ -129,28 +146,30 @@ for time in range(len(times)):
 				else:
 				  	T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB # IC: no pressure support
 				return YTArray(convert_T_over_mu_to_T(T_over_mu), "K") # now T
-		        pf.add_field(("gas", "temperature_2"), function=_temperature_2, units="K")
-		elif codes[code] == "CHANGA" or codes[code] == "GASOLINE" or codes[code] == "GEAR" or codes[code] == "GIZMO":
+		        pf.add_field(("gas", "temperature"), function=_temperature_2, force_override=True, units="K")
+		elif codes[code] == "CHANGA" or codes[code] == "GASOLINE" or codes[code] == "GEAR" or codes[code] == "GIZMO": 
+			# requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
 			def _Density_2(field, data):
 				return data[("Gas", "Density")].in_units("g/cm**3")
-			pf.add_field(("Gas", "Density_2"), function=_Density_2, take_log=True, units="g/cm**3")
+			# particle_type=False doesn't make sense, but is critical for PhasePlot to work
+			pf.add_field(("Gas", "Density_2"), function=_Density_2, take_log=True, particle_type=False, display_name="Density", units="g/cm**3") 
 			def _Temperature_2(field, data):
 				return data[("Gas", "Temperature")].in_units("K")
-			pf.add_field(("Gas", "Temperature_2"), function=_Temperature_2, take_log=True, units="K") # requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
+			pf.add_field(("Gas", "Temperature_2"), function=_Temperature_2, take_log=True, particle_type=False, display_name="Temperature", units="K") 
 			def _Mass_2(field, data):
 				return data[("Gas", "Mass")].in_units("Msun")
-			pf.add_field(("Gas", "Mass_2"), function=_Mass_2, take_log=True, units="Msun")
-		elif codes[code] == "GADGET-3":
+			pf.add_field(("Gas", "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")
+		elif codes[code] == "GADGET-3": 
+			# requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
 			def _Density_2(field, data):
 				return data[("PartType0", "Density")].in_units("g/cm**3")
-			pf.add_field(("Gas", "Density_2"), function=_Density_2, take_log=True, units="g/cm**3")
+			pf.add_field(("Gas", "Density_2"), function=_Density_2, take_log=True, particle_type=False, display_name="Density", units="g/cm**3")
 			def _Temperature_2(field, data):
 				return data[("PartType0", "Temperature")].in_units("K")
-			pf.add_field(("Gas", "Temperature_2"), function=_Temperature_2, take_log=True, units="K") # requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
+			pf.add_field(("Gas", "Temperature_2"), function=_Temperature_2, take_log=True, particle_type=False, display_name="Temperature", units="K") 
 			def _Mass_2(field, data):
 				return data[("PartType0", "Masses")].in_units("Msun")
-			pf.add_field(("Gas", "Mass_2"), function=_Mass_2, take_log=True, units="Msun")
-
+			pf.add_field(("Gas", "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")
 
 		# AXIS SWAP
                 if codes[code] == 'GEAR':
@@ -205,14 +224,9 @@ for time in range(len(times)):
 		# TEMPERATURE MAPS
 		if draw_temperature_map == 1:
 			for ax in range(1, 3):  
-				if codes[code] == 'RAMSES': 
-					p2 = ProjectionPlot(pf, ax, ("gas", "temperature_2"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density_squared"), fontsize=9)
-					p2.set_zlim(("gas", "temperature_2"), 1e1, 1e6)
-					plot2 = p2.plots[("gas", "temperature_2")]
-				else:
-					p2 = ProjectionPlot(pf, ax, ("gas", "temperature"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density_squared"), fontsize=9)
-					p2.set_zlim(("gas", "temperature"), 1e1, 1e6)
-					plot2 = p2.plots[("gas", "temperature")]
+				p2 = ProjectionPlot(pf, ax, ("gas", "temperature"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density_squared"), fontsize=9)
+				p2.set_zlim(("gas", "temperature"), 1e1, 1e6)
+				plot2 = p2.plots[("gas", "temperature")]
 
 				plot2.figure = fig_temperature_map[time]
 				plot2.axes = grid_temperature_map[time][(ax-1)*len(codes)+code].axes
@@ -227,20 +241,15 @@ for time in range(len(times)):
 		# DENSITY-TEMPERATURE PDF
 		if draw_PDF == 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
-			if codes[code] == "CHANGA" or codes[code] == "GASOLINE" or codes[code] == "GADGET-3" or codes[code] == "GEAR" or codes[code] == "GIZMO":
-				p3 = PhasePlot(sp, ("Gas", "Density_2"), ("Gas", "Temperature_2"), ("Gas", "Mass_2"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
-				p3.set_zlim(("Gas", "Mass_2"), 1e3, 1e8)
-				plot3 = p3.plots[("Gas", "Mass_2")]
-			elif codes[code] == 'RAMSES': 
-				p3 = PhasePlot(sp, ("gas", "density"), ("gas", "temperature_2"), ("gas", "cell_mass"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
-				p3.set_unit("cell_mass", 'Msun')
-				p3.set_zlim(("gas", "cell_mass"), 1e3, 1e8)
-				plot3 = p3.plots[("gas", "cell_mass")]
-			else:
+			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 				p3 = PhasePlot(sp, ("gas", "density"), ("gas", "temperature"), ("gas", "cell_mass"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
 				p3.set_unit("cell_mass", 'Msun')
 				p3.set_zlim(("gas", "cell_mass"), 1e3, 1e8)
 				plot3 = p3.plots[("gas", "cell_mass")]
+			else:
+				p3 = PhasePlot(sp, ("Gas", "Density_2"), ("Gas", "Temperature_2"), ("Gas", "Mass_2"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
+				p3.set_zlim(("Gas", "Mass_2"), 1e3, 1e8)
+				plot3 = p3.plots[("Gas", "Mass_2")]
 			p3.set_xlim(1e-29, 1e-21)
 			p3.set_ylim(10, 1e7)
 
