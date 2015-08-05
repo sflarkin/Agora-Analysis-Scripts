@@ -129,8 +129,28 @@ for time in range(len(times)):
 				else:
 				  	T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB # IC: no pressure support
 				return YTArray(convert_T_over_mu_to_T(T_over_mu), "K") # now T
-
 		        pf.add_field(("gas", "temperature_2"), function=_temperature_2, units="K")
+		elif codes[code] == "CHANGA" or codes[code] == "GASOLINE" or codes[code] == "GEAR" or codes[code] == "GIZMO":
+			def _Density_2(field, data):
+				return data[("Gas", "Density")].in_units("g/cm**3")
+			pf.add_field(("Gas", "Density_2"), function=_Density_2, take_log=True, units="g/cm**3")
+			def _Temperature_2(field, data):
+				return data[("Gas", "Temperature")].in_units("K")
+			pf.add_field(("Gas", "Temperature_2"), function=_Temperature_2, take_log=True, units="K") # requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
+			def _Mass_2(field, data):
+				return data[("Gas", "Mass")].in_units("Msun")
+			pf.add_field(("Gas", "Mass_2"), function=_Mass_2, take_log=True, units="Msun")
+		elif codes[code] == "GADGET-3":
+			def _Density_2(field, data):
+				return data[("PartType0", "Density")].in_units("g/cm**3")
+			pf.add_field(("Gas", "Density_2"), function=_Density_2, take_log=True, units="g/cm**3")
+			def _Temperature_2(field, data):
+				return data[("PartType0", "Temperature")].in_units("K")
+			pf.add_field(("Gas", "Temperature_2"), function=_Temperature_2, take_log=True, units="K") # requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
+			def _Mass_2(field, data):
+				return data[("PartType0", "Masses")].in_units("Msun")
+			pf.add_field(("Gas", "Mass_2"), function=_Mass_2, take_log=True, units="Msun")
+
 
 		# AXIS SWAP
                 if codes[code] == 'GEAR':
@@ -207,7 +227,11 @@ for time in range(len(times)):
 		# DENSITY-TEMPERATURE PDF
 		if draw_PDF == 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
-			if codes[code] == 'RAMSES': 
+			if codes[code] == "CHANGA" or codes[code] == "GASOLINE" or codes[code] == "GADGET-3" or codes[code] == "GEAR" or codes[code] == "GIZMO":
+				p3 = PhasePlot(sp, ("Gas", "Density_2"), ("Gas", "Temperature_2"), ("Gas", "Mass_2"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
+				p3.set_zlim(("Gas", "Mass_2"), 1e3, 1e8)
+				plot3 = p3.plots[("Gas", "Mass_2")]
+			elif codes[code] == 'RAMSES': 
 				p3 = PhasePlot(sp, ("gas", "density"), ("gas", "temperature_2"), ("gas", "cell_mass"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
 				p3.set_unit("cell_mass", 'Msun')
 				p3.set_zlim(("gas", "cell_mass"), 1e3, 1e8)
