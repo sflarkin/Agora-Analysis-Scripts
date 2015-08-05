@@ -108,7 +108,7 @@ for time in range(len(times)):
 
 		# ADDITIONAL FIELDS: TEMPERATURE FIELDS FOR CERTAIN CODES, 
                 if codes[code] == 'RAMSES': 
-			# from utilities:convenience.py:   Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
+			# from grackle/src/python/utilities/convenience.py: Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
 			def calc_mu_table_local(temperature):
 				tt = np.array([1.0e+01, 1.0e+02, 1.0e+03, 1.0e+04, 1.3e+04, 2.1e+04, 3.4e+04, 6.3e+04, 1.0e+05, 1.0e+09])
 				mt = np.array([1.18701555, 1.15484424, 1.09603514, 0.9981496, 0.96346395, 0.65175895, 0.6142901, 0.6056833, 0.5897776, 0.58822635])
