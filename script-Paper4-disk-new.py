@@ -64,6 +64,7 @@ times                = [0, 500]  # in Myr
 figure_width         = 30        # in kpc
 n_ref                = 256       # for SPH codes
 over_refine_factor   = 1         # for SPH codes
+disk_normal_vector   = [0.0, 0.0, 1.0]
 
 fig_density_map      = [] 
 fig_temperature_map  = []
@@ -91,7 +92,7 @@ for time in range(len(times)):
 for time in range(len(times)):
 	for code in range(len(codes)):
 		# LOAD DATASETS
-		if codes[code] == 'ART-I': # ART frontend fails to find the accompanying files, so we specify them; see http://yt-project.org/docs/dev/examining/loading_data.html#art-data
+		if codes[code] == 'ART-I': # ART frontend doesn't find accompanying files, so we specify them; see http://yt-project.org/docs/dev/examining/loading_data.html#art-data
 			dirnames = filenames[code][time][:filenames[code][time].rfind('/')+1]
 			if time == 0:
 				timestamp = ''
@@ -113,9 +114,9 @@ for time in range(len(times)):
 			return data[("gas", "density")]**2
 		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
 
-		# ADDITIONAL FIELDS: TEMPERATURE FIELDS FOR CERTAIN CODES, 
+		# ADDITIONAL FIELDS: TEMPERATURE FIELDS FOR CERTAIN CODES
                 if codes[code] == 'RAMSES': 
-			# from grackle/src/python/utilities/convenience.py: Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
+			# From grackle/src/python/utilities/convenience.py: Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
 			def calc_mu_table_local(temperature):
 				tt = np.array([1.0e+01, 1.0e+02, 1.0e+03, 1.0e+04, 1.3e+04, 2.1e+04, 3.4e+04, 6.3e+04, 1.0e+05, 1.0e+09])
 				mt = np.array([1.18701555, 1.15484424, 1.09603514, 0.9981496, 0.96346395, 0.65175895, 0.6142901, 0.6056833, 0.5897776, 0.58822635])
@@ -139,8 +140,7 @@ for time in range(len(times)):
 				logT_over_mu = np.log(T_over_mu)
 				logT = np.interp(logT_over_mu, np.log(T_over_mu_values), np.log(temperature_values)) # linear interpolation in log-log space
 				return np.exp(logT)
-			# the pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting yt/frontends/ramses/fields.py)
-			# because RAMSES unit assignments are now very confusing (Issue #1055 and others), I will just do it in my own way.  
+			# The pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting yt/frontends/ramses/fields.py)
 			def _temperature_2(field, data):  
 				T_J = 1800.0  # in K
 				n_J = 8.0     # in H/cc
@@ -155,9 +155,17 @@ for time in range(len(times)):
 				return YTArray(convert_T_over_mu_to_T(T_over_mu), "K") # now T
 		        pf.add_field(("gas", "temperature"), function=_temperature_2, force_override=True, units="K")
 
-		# AXIS SWAP
+		# GAS PARTICLE FILEDS FOR SPH CODES
+		if codes[code] == 'CHANGA' or codes[code] == 'GASOLINE' or codes[code] == 'GEAR' or codes[code] == 'GIZMO':
+			PartType_to_use = "Gas"
+			MassType_to_use = "Mass"
+		elif codes[code] == "GADGET-3":
+			PartType_to_use = "PartType0"				
+			MassType_to_use = "Masses"
+
+		# AXIS SWAP & NORMAL VECTOR
                 if codes[code] == 'GEAR':
-			# temporary fix until GEAR group figures out the issue
+			# Temporary fix until GEAR group figures out the issue
 			# pf.coordinates.x_axis = {0: 0, 1: 2, 2: 2, 'x': 0, 'y': 2, 'z': 2} 
 			# pf.coordinates.y_axis = {0: 1, 1: 1, 2: 0, 'x': 1, 'y': 1, 'z': 0}
 			pf.coordinates.x_axis[0] = 0 
@@ -171,7 +179,7 @@ for time in range(len(times)):
 			pf.coordinates.x_axis['z'] = 2
 			pf.coordinates.y_axis['z'] = 0
 		else:
-			# from http://nbviewer.ipython.org/gist/ngoldbaum/a753d83a7f8e123b0a2c
+			# From http://nbviewer.ipython.org/gist/ngoldbaum/a753d83a7f8e123b0a2c
 			# pf.coordinates.x_axis = {0: 1, 1: 0, 2: 0, 'x': 1, 'y': 0, 'z': 0} 
 			# pf.coordinates.y_axis = {0: 2, 1: 2, 2: 1, 'x': 2, 'y': 2, 'z': 1}
 			pf.coordinates.x_axis[1] = 0
@@ -184,15 +192,9 @@ for time in range(len(times)):
 		center = sp.quantities.center_of_mass(use_gas=True, use_particles=True).in_units("kpc")
                 if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 			proj_region = pf.box(center - YTArray([figure_width, figure_width, figure_width], 'kpc'),
-					     center + YTArray([figure_width, figure_width, figure_width], 'kpc'))
+		 			     center + YTArray([figure_width, figure_width, figure_width], 'kpc')) # projected images made using a (2*figure_width)^3 box for AMR codes
 		else:
-			proj_region = pf.all_data()
-			if codes[code] == "GADGET-3":
-				PartType_to_use = "PartType0"				
-				MassType_to_use = "Masses"
-			else:
-				PartType_to_use = "Gas"
-				MassType_to_use = "Mass"
+		 	proj_region = pf.all_data()
 	
 		# DENSITY MAPS
 		if draw_density_map == 1: 
@@ -254,6 +256,16 @@ for time in range(len(times)):
 				p3.set_zlim((PartType_to_use, "Mass_2"), 1e3, 1e8)
 				plot3 = p3.plots[(PartType_to_use, "Mass_2")]
 
+				# p3 = ParticlePhasePlot(sp, (PartType_to_use, "Density"), (PartType_to_use, "Temperature"), (PartType_to_use, MassType_to_use), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
+				# p3.set_unit("Density", 'g/cm**3')
+				# p3.set_unit("Temperature", 'K')
+				# p3.set_unit(MassType_to_use, 'Msun') # this doesn't work?
+				# p3.set_log("Density", True)
+				# p3.set_log("Temperature", True)
+				# p3.set_zlim((PartType_to_use, MassType_to_use), 1e3, 1e8)
+				# p3.set_colorbar_label((PartType_to_use, MassType_to_use), "Mass ($\mathrm{M}_{\odot}$)")
+				# plot3 = p3.plots[(PartType_to_use, MassType_to_use)]
+
 			p3.set_xlim(1e-29, 1e-21)
 			p3.set_ylim(10, 1e7)
 
@@ -269,7 +281,7 @@ for time in range(len(times)):
 		# POSITION-VELOCITY PDF
 		if draw_pos_vel_PDF == 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
-			sp.set_field_parameter("normal", [0.0, 0.0, 1.0]) # z-hat
+			sp.set_field_parameter("normal", disk_normal_vector) 
 			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 				sp_dense = sp.cut_region(["obj['gas', 'density'].in_units('g/cm**3') > 1.e-25"]) # For AMR codes, consider only the cells that are dense enough
 				pf.field_info[("index", "cylindrical_r")].take_log = False
