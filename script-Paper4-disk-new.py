@@ -55,16 +55,15 @@ gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 			    'UnitMass_in_g'            :   1.989e+43,
 			    'UnitVelocity_in_cm_per_s' :      100000}
 
-draw_density_map     = 1         # 1/0 = ON/OFF
-draw_temperature_map = 1         # 1/0 = ON/OFF
-draw_PDF             = 1         # 1/0 = ON/OFF
+draw_density_map     = 0         # 1/0 = ON/OFF
+draw_temperature_map = 0         # 1/0 = ON/OFF
+draw_PDF             = 0         # 1/0 = ON/OFF
 draw_pos_vel_PDF     = 1         # 1/0 = ON/OFF
 add_nametag          = 1         # 1/0 = ON/OFF
 times                = [0, 500]  # in Myr
 figure_width         = 30        # in kpc
 n_ref                = 256       # for SPH codes
 over_refine_factor   = 1         # for SPH codes
-disk_normal_vector   = [0.0, 0.0, 1.0]
 
 fig_density_map      = [] 
 fig_temperature_map  = []
@@ -92,7 +91,7 @@ for time in range(len(times)):
 for time in range(len(times)):
 	for code in range(len(codes)):
 		# LOAD DATASETS
-		if codes[code] == 'ART-I': # ART frontend doesn't find accompanying files, so we specify them; see http://yt-project.org/docs/dev/examining/loading_data.html#art-data
+		if codes[code] == 'ART-I': # ART frontend doesn't find the accompanying files, so we specify them; see http://yt-project.org/docs/dev/examining/loading_data.html#art-data
 			dirnames = filenames[code][time][:filenames[code][time].rfind('/')+1]
 			if time == 0:
 				timestamp = ''
@@ -165,7 +164,7 @@ for time in range(len(times)):
 
 		# AXIS SWAP & NORMAL VECTOR
                 if codes[code] == 'GEAR':
-			# Temporary fix until GEAR group figures out the issue
+			# Temporary fix until GEAR group figures out the issue; currently, [xyz] in GEAR = [yzx] in other codes
 			# pf.coordinates.x_axis = {0: 0, 1: 2, 2: 2, 'x': 0, 'y': 2, 'z': 2} 
 			# pf.coordinates.y_axis = {0: 1, 1: 1, 2: 0, 'x': 1, 'y': 1, 'z': 0}
 			pf.coordinates.x_axis[0] = 0 
@@ -178,6 +177,7 @@ for time in range(len(times)):
 			pf.coordinates.y_axis[2] = 0
 			pf.coordinates.x_axis['z'] = 2
 			pf.coordinates.y_axis['z'] = 0
+			disk_normal_vector   = [0.0, 1.0, 0.0]
 		else:
 			# From http://nbviewer.ipython.org/gist/ngoldbaum/a753d83a7f8e123b0a2c
 			# pf.coordinates.x_axis = {0: 1, 1: 0, 2: 0, 'x': 1, 'y': 0, 'z': 0} 
@@ -186,6 +186,7 @@ for time in range(len(times)):
 			pf.coordinates.y_axis[1] = 2
 			pf.coordinates.x_axis['y'] = 0
 			pf.coordinates.y_axis['y'] = 2
+			disk_normal_vector   = [0.0, 0.0, 1.0]
 
 		v, cen = pf.h.find_max(("gas", "density")) # find the center to keep the galaxy at the center of all the images.
 		sp = pf.sphere(cen, (figure_width, "kpc"))
@@ -255,16 +256,6 @@ for time in range(len(times)):
 				p3 = PhasePlot(sp, (PartType_to_use, "Density_2"), (PartType_to_use, "Temperature_2"), (PartType_to_use, "Mass_2"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
 				p3.set_zlim((PartType_to_use, "Mass_2"), 1e3, 1e8)
 				plot3 = p3.plots[(PartType_to_use, "Mass_2")]
-
-				# p3 = ParticlePhasePlot(sp, (PartType_to_use, "Density"), (PartType_to_use, "Temperature"), (PartType_to_use, MassType_to_use), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
-				# p3.set_unit("Density", 'g/cm**3')
-				# p3.set_unit("Temperature", 'K')
-				# p3.set_unit(MassType_to_use, 'Msun') # this doesn't work?
-				# p3.set_log("Density", True)
-				# p3.set_log("Temperature", True)
-				# p3.set_zlim((PartType_to_use, MassType_to_use), 1e3, 1e8)
-				# p3.set_colorbar_label((PartType_to_use, MassType_to_use), "Mass ($\mathrm{M}_{\odot}$)")
-				# plot3 = p3.plots[(PartType_to_use, MassType_to_use)]
 
 			p3.set_xlim(1e-29, 1e-21)
 			p3.set_ylim(10, 1e7)
