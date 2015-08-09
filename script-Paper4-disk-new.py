@@ -55,11 +55,11 @@ gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 			    'UnitMass_in_g'            :   1.989e+43,
 			    'UnitVelocity_in_cm_per_s' :      100000}
 
-draw_density_map     = 0         # 1/0 = ON/OFF
-draw_temperature_map = 0         # 1/0 = ON/OFF
-draw_PDF             = 0         # 1/0 = ON/OFF
-draw_pos_vel_PDF     = 1         # 1/0 = ON/OFF
-add_nametag          = 1         # 1/0 = ON/OFF
+draw_density_map     = 0         # 0/1   = OFF/ON
+draw_temperature_map = 0         # 0/1   = OFF/ON
+draw_PDF             = 0         # 0/1   = OFF/ON
+draw_pos_vel_PDF     = 2         # 0/1/2 = OFF/ON/ON with 1D profile
+add_nametag          = 1         # 0/1   = OFF/ON
 times                = [0, 500]  # in Myr
 figure_width         = 30        # in kpc
 n_ref                = 256       # for SPH codes
@@ -207,7 +207,6 @@ for time in range(len(times)):
 				plot.figure = fig_density_map[time]
 				plot.axes = grid_density_map[time][(ax-1)*len(codes)+code].axes
 				if code == 0: plot.cax = grid_density_map[time].cbar_axes[0]
-
 				p._setup_plots()
 
 			if add_nametag == 1:
@@ -224,7 +223,6 @@ for time in range(len(times)):
 				plot2.figure = fig_temperature_map[time]
 				plot2.axes = grid_temperature_map[time][(ax-1)*len(codes)+code].axes
 				if code == 0: plot2.cax = grid_temperature_map[time].cbar_axes[0]
-
 				p2._setup_plots()
 
 			if add_nametag == 1:
@@ -270,7 +268,7 @@ for time in range(len(times)):
 				grid_PDF[time][code].axes.add_artist(at)
 
 		# POSITION-VELOCITY PDF
-		if draw_pos_vel_PDF == 1:
+		if draw_pos_vel_PDF >= 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
 			sp.set_field_parameter("normal", disk_normal_vector) 
 			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
@@ -298,7 +296,7 @@ for time in range(len(times)):
 
 			p4.set_xlabel("Cylindrical Radius (kpc)")
 			p4.set_ylabel("Rotational Velocity (km/s)")
-			p4.set_xlim(0, 14)
+ 			p4.set_xlim(0, 14)
 			p4.set_ylim(-50, 350)
 
 			plot4.figure = fig_pos_vel_PDF[time]
@@ -306,10 +304,27 @@ for time in range(len(times)):
 			if code == 0: plot4.cax = grid_pos_vel_PDF[time].cbar_axes[0]
 			p4._setup_plots()
 
+			# Add 1D profile line if requested
+			if draw_pos_vel_PDF == 2 and time != 0:
+				if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
+					p5 = ProfilePlot(sp_dense, ("index", "cylindrical_r"),  ("gas", "cylindrical_tangential_velocity"), \
+								 weight_field=("gas", "cell_mass"), n_bins=50, x_log=False)
+					p5.set_log("cylindrical_tangential_velocity", False)
+					p5.set_unit("cylindrical_r", 'kpc')
+					p5.set_xlim(0, 14)
+					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["cylindrical_tangential_velocity"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
+				else:
+					p5 = ProfilePlot(sp, (PartType_to_use, "particle_position_cylindrical_radius"), (PartType_to_use, "particle_velocity_cylindrical_theta"), \
+								 weight_field=(PartType_to_use, MassType_to_use), n_bins=50, x_log=False)
+					p5.set_log("particle_velocity_cylindrical_theta", False)
+					p5.set_unit("particle_position_cylindrical_radius", 'kpc')
+					p5.set_xlim(0, 14)
+					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
+				plot4.axes.add_line(line) 
+
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=4, prop=dict(size=10), frameon=True)
 				grid_pos_vel_PDF[time][code].axes.add_artist(at)
-
 
 if draw_density_map == 1:
 	for time in range(len(times)):
@@ -320,6 +335,6 @@ if draw_temperature_map == 1:
 if draw_PDF == 1:
 	for time in range(len(times)):
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-if draw_pos_vel_PDF == 1:
+if draw_pos_vel_PDF >= 1:
 	for time in range(len(times)):
 		fig_pos_vel_PDF[time].savefig("pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
