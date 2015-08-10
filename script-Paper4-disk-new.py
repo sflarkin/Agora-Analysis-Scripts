@@ -297,7 +297,7 @@ for time in range(len(times)):
 			p4.set_xlabel("Cylindrical Radius (kpc)")
 			p4.set_ylabel("Rotational Velocity (km/s)")
  			p4.set_xlim(0, 14)
-			p4.set_ylim(-50, 350)
+			p4.set_ylim(-100, 350)
 
 			plot4.figure = fig_pos_vel_PDF[time]
 			plot4.axes = grid_pos_vel_PDF[time][code].axes
@@ -312,6 +312,7 @@ for time in range(len(times)):
 					p5.set_log("cylindrical_tangential_velocity", False)
 					p5.set_unit("cylindrical_r", 'kpc')
 					p5.set_xlim(0, 14)
+					p5.set_ylim("cylindrical_tangential_velocity", -100, 350)
 					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["cylindrical_tangential_velocity"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
 				else:
 					p5 = ProfilePlot(sp, (PartType_to_use, "particle_position_cylindrical_radius"), (PartType_to_use, "particle_velocity_cylindrical_theta"), \
@@ -319,8 +320,9 @@ for time in range(len(times)):
 					p5.set_log("particle_velocity_cylindrical_theta", False)
 					p5.set_unit("particle_position_cylindrical_radius", 'kpc')
 					p5.set_xlim(0, 14)
+					p5.set_ylim("particle_velocity_cylindrical_theta", -100, 350)
 					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
-				plot4.axes.add_line(line) 
+				grid_pos_vel_PDF[time][code].axes.add_line(line) 
 
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=4, prop=dict(size=10), frameon=True)
