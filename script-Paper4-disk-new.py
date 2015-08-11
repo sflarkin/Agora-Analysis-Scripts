@@ -54,39 +54,55 @@ filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_
 gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 			    'UnitMass_in_g'            :   1.989e+43,
 			    'UnitVelocity_in_cm_per_s' :      100000}
+color_names              = ['red', 'magenta', 'gold', 'lime', 'green', 'cyan', 'blue', 'blueviolet', 'black']
+linestyle_names          = ['-', '--', '-.']
 
-draw_density_map     = 0         # 0/1   = OFF/ON
-draw_temperature_map = 0         # 0/1   = OFF/ON
-draw_PDF             = 0         # 0/1   = OFF/ON
-draw_pos_vel_PDF     = 2         # 0/1/2 = OFF/ON/ON with 1D profile
-add_nametag          = 1         # 0/1   = OFF/ON
-times                = [0, 500]  # in Myr
-figure_width         = 30        # in kpc
-n_ref                = 256       # for SPH codes
-over_refine_factor   = 1         # for SPH codes
+draw_density_map       = 0         # 0/1   = OFF/ON
+draw_temperature_map   = 0         # 0/1   = OFF/ON
+draw_PDF               = 0         # 0/1   = OFF/ON
+draw_pos_vel_PDF       = 2         # 0/1/2 = OFF/ON/ON with 1D profile
+draw_density_DF        = 0         # 0/1   = OFF/ON
+add_nametag            = 1         # 0/1   = OFF/ON
+times                  = [0, 500]  # in Myr
+figure_width           = 30        # in kpc
+n_ref                  = 256       # for SPH codes
+over_refine_factor     = 1         # for SPH codes
 
-fig_density_map      = [] 
-fig_temperature_map  = []
-fig_PDF              = []
-fig_pos_vel_PDF      = []
-grid_density_map     = []
-grid_temperature_map = []
-grid_PDF             = []
-grid_pos_vel_PDF     = []
+fig_density_map        = [] 
+fig_temperature_map    = []
+fig_PDF                = []
+fig_pos_vel_PDF        = []
+grid_density_map       = []
+grid_temperature_map   = []
+grid_PDF               = []
+grid_pos_vel_PDF       = []
+pos_vel_xs             = []
+pos_vel_profiles       = []
+density_DF_xs          = []
+density_DF_profiles    = []
 
 for time in range(len(times)):
-	fig_density_map      += [plt.figure(figsize=(100,20))]
-	fig_temperature_map  += [plt.figure(figsize=(100,20))]
-	fig_PDF              += [plt.figure(figsize=(50, 80))]
-	fig_pos_vel_PDF      += [plt.figure(figsize=(50, 80))]
-	grid_density_map     += [AxesGrid(fig_density_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
-					  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
-	grid_temperature_map += [AxesGrid(fig_temperature_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
-					  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
-	grid_PDF             += [AxesGrid(fig_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
-					  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
-	grid_pos_vel_PDF     += [AxesGrid(fig_pos_vel_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
-					  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
+	if draw_density_map == 1:
+		fig_density_map      += [plt.figure(figsize=(100,20))]
+		grid_density_map     += [AxesGrid(fig_density_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
+	if draw_temperature_map == 1:
+		fig_temperature_map  += [plt.figure(figsize=(100,20))]
+		grid_temperature_map += [AxesGrid(fig_temperature_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
+	if draw_PDF == 1:
+		fig_PDF              += [plt.figure(figsize=(50, 80))]
+		grid_PDF             += [AxesGrid(fig_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
+	if draw_pos_vel_PDF >= 1:
+		fig_pos_vel_PDF      += [plt.figure(figsize=(50, 80))]
+		grid_pos_vel_PDF     += [AxesGrid(fig_pos_vel_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
+		pos_vel_xs.append([])
+		pos_vel_profiles.append([])
+	if draw_density_DF == 1:
+		density_DF_xs.append([])
+		density_DF_profiles.append([])
 
 for time in range(len(times)):
 	for code in range(len(codes)):
@@ -314,6 +330,8 @@ for time in range(len(times)):
 					p5.set_xlim(0, 14)
 					p5.set_ylim("cylindrical_tangential_velocity", -100, 350)
 					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["cylindrical_tangential_velocity"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
+					pos_vel_xs[time].append(p5.profiles[0].x.in_units('kpc').d)
+					pos_vel_profiles[time].append(p5.profiles[0]["cylindrical_tangential_velocity"].in_units('km/s').d)
 				else:
 					p5 = ProfilePlot(sp, (PartType_to_use, "particle_position_cylindrical_radius"), (PartType_to_use, "particle_velocity_cylindrical_theta"), \
 								 weight_field=(PartType_to_use, MassType_to_use), n_bins=50, x_log=False)
@@ -322,21 +340,74 @@ for time in range(len(times)):
 					p5.set_xlim(0, 14)
 					p5.set_ylim("particle_velocity_cylindrical_theta", -100, 350)
 					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
+					pos_vel_xs[time].append(p5.profiles[0].x.in_units('kpc').d)
+					pos_vel_profiles[time].append(p5.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s').d)
 				grid_pos_vel_PDF[time][code].axes.add_line(line) 
 
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=4, prop=dict(size=10), frameon=True)
 				grid_pos_vel_PDF[time][code].axes.add_artist(at)
 
-if draw_density_map == 1:
-	for time in range(len(times)):
+		# DENSITY DF
+		if draw_density_DF == 1:
+			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
+			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
+				p6 = ProfilePlot(sp, ("gas", "density"),  ("gas", "cell_mass"), weight_field=None, n_bins=50, x_log=True, accumulation=True, fractional=False)
+				p6.set_log("cell_mass", True)
+				density_DF_xs[time].append(p6.profiles[0].x.in_units('g/cm**3').d)
+				density_DF_profiles[time].append(p6.profiles[0]["cell_mass"].in_units('Msun').d)
+			else:
+				# Because ParticleProfilePlot doesn't exist, I will do the following trick.  
+				# particle_type=False doesn't make sense, but is critical for ProfilePlot to work
+				# requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
+				def _Density_2(field, data):
+					return data[(PartType_to_use, "Density")].in_units('g/cm**3')
+				pf.add_field((PartType_to_use, "Density_2"), function=_Density_2, take_log=True, particle_type=False, display_name="Density", units="g/cm**3") 
+				def _Mass_2(field, data):
+					return data[(PartType_to_use, MassType_to_use)].in_units('Msun')
+				pf.add_field((PartType_to_use, "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")				
+				p6 = ProfilePlot(sp, (PartType_to_use, "Density_2"),  (PartType_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=True, accumulation=True, fractional=False)
+				p6.set_log("Mass_2", True)
+				density_DF_xs[time].append(p6.profiles[0].x.in_units('g/cm**3').d)
+				density_DF_profiles[time].append(p6.profiles[0]["Mass_2"].in_units('Msun').d)
+
+	if draw_density_map == 1:
 		fig_density_map[time].savefig("Sigma_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-if draw_temperature_map == 1:
-	for time in range(len(times)):
+	if draw_temperature_map == 1:
 		fig_temperature_map[time].savefig("Temp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-if draw_PDF == 1:
-	for time in range(len(times)):
+	if draw_PDF == 1:
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-if draw_pos_vel_PDF >= 1:
-	for time in range(len(times)):
+	if draw_pos_vel_PDF >= 1:
 		fig_pos_vel_PDF[time].savefig("pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		if draw_pos_vel_PDF == 2 and time != 0:
+			plt.clf()
+			plt.subplot(111, aspect=0.02)
+			for code in range(len(codes)):
+				lines = plt.plot(pos_vel_xs[time][code], pos_vel_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+			plt.xlim(0, 14)
+			plt.ylim(-100, 350)
+			plt.xlabel("Cylindrical Radius ($\mathrm{kpc}$)")
+			plt.ylabel("Rotational Velocity ($\mathrm{km/s}$)")
+			plt.legend(codes, loc=4, frameon=True)
+			leg = plt.gca().get_legend()
+			ltext = leg.get_texts()
+			plt.setp(ltext, fontsize='small')
+			plt.savefig("pos_vel_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+			plt.clf()
+	if draw_density_DF == 1:
+		plt.clf()
+		plt.subplot(111, aspect=1)
+		for code in range(len(codes)):
+			lines = plt.plot(density_DF_xs[time][code], density_DF_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.semilogx()
+		plt.semilogy()
+		plt.xlim(1e-29, 1e-21)
+		plt.ylim(1e5, 2e10)
+		plt.xlabel("Density ($\mathrm{g}/\mathrm{cm}^3$)")
+		plt.ylabel("Mass ($\mathrm{M}_{\odot}$)")
+		plt.legend(codes, loc=4, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='xx-small')
+		plt.savefig("density_DF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
