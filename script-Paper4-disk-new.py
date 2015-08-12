@@ -29,7 +29,7 @@ filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_
 	     ['./CHANGA/disklow/disklow.000000', './CHANGA/disklow/disklow.000500'], 
 	     ['./ENZO/DD0000/DD0000', './ENZO/DD0100/DD0100'],
  	     ['./GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', './GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5'],
- 	     ['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335'],
+ 	     ['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00355'],
   	     ['./GEAR/snapshot_0000', './GEAR/snapshot_0500'],
  	     ['./GIZMO/snapshot_000', './GIZMO/snapshot_100_hsml'],
  	     ['./RAMSES/output_00001/info_00001.txt', './RAMSES/output_00068/info_00068.txt']]
@@ -44,7 +44,7 @@ filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_
 # codes = ['GADGET-3']
 # filenames = [['./GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', './GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5']]
 # codes = ['GASOLINE']
-# filenames = [['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335']]
+# filenames = [['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00355']]
 # codes = ['GEAR']
 # filenames = [['./GEAR/snapshot_0000', './GEAR/snapshot_0500']]
 # codes = ['GIZMO']
@@ -57,11 +57,13 @@ gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 color_names              = ['red', 'magenta', 'gold', 'lime', 'green', 'cyan', 'blue', 'blueviolet', 'black']
 linestyle_names          = ['-', '--', '-.']
 
-draw_density_map       = 0         # 0/1   = OFF/ON
-draw_temperature_map   = 0         # 0/1   = OFF/ON
-draw_PDF               = 0         # 0/1   = OFF/ON
+draw_density_map       = 1         # 0/1   = OFF/ON
+draw_temperature_map   = 1         # 0/1   = OFF/ON
+draw_PDF               = 1         # 0/1   = OFF/ON
 draw_pos_vel_PDF       = 2         # 0/1/2 = OFF/ON/ON with 1D profile
 draw_density_DF        = 0         # 0/1   = OFF/ON
+draw_radius_DF         = 0         # 0/1   = OFF/ON
+draw_height_DF         = 0         # 0/1   = OFF/ON
 add_nametag            = 1         # 0/1   = OFF/ON
 times                  = [0, 500]  # in Myr
 figure_width           = 30        # in kpc
@@ -80,6 +82,10 @@ pos_vel_xs             = []
 pos_vel_profiles       = []
 density_DF_xs          = []
 density_DF_profiles    = []
+radius_DF_xs           = []
+radius_DF_profiles     = []
+height_DF_xs           = []
+height_DF_profiles     = []
 
 for time in range(len(times)):
 	if draw_density_map == 1:
@@ -103,6 +109,12 @@ for time in range(len(times)):
 	if draw_density_DF == 1:
 		density_DF_xs.append([])
 		density_DF_profiles.append([])
+	if draw_radius_DF == 1:
+		radius_DF_xs.append([])
+		radius_DF_profiles.append([])
+	if draw_height_DF == 1:
+		height_DF_xs.append([])
+		height_DF_profiles.append([])
 
 for time in range(len(times)):
 	for code in range(len(codes)):
@@ -125,11 +137,15 @@ for time in range(len(times)):
 		else:
 			pf = load(filenames[code][time])
 
-		def _density_squared(field, data):  
-			return data[("gas", "density")]**2
-		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
+		# GAS PARTICLE FILEDS FOR SPH CODES
+		if codes[code] == 'CHANGA' or codes[code] == 'GASOLINE' or codes[code] == 'GEAR' or codes[code] == 'GIZMO':
+			PartType_to_use = "Gas"
+			MassType_to_use = "Mass"
+		elif codes[code] == "GADGET-3":
+			PartType_to_use = "PartType0"				
+			MassType_to_use = "Masses"
 
-		# ADDITIONAL FIELDS: TEMPERATURE FIELDS FOR CERTAIN CODES
+		# ADDITIONAL FIELDS
                 if codes[code] == 'RAMSES': 
 			# From grackle/src/python/utilities/convenience.py: Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
 			def calc_mu_table_local(temperature):
@@ -150,7 +166,6 @@ for time in range(len(times)):
 				mu_values.append(current_mu)
 				T_over_mu_values.append(current_temperature/current_mu)
 				current_temperature = np.exp(np.log(current_temperature)+dlogT)
-				print "current_temperature = %e " % current_temperature
 			def convert_T_over_mu_to_T(T_over_mu):
 				logT_over_mu = np.log(T_over_mu)
 				logT = np.interp(logT_over_mu, np.log(T_over_mu_values), np.log(temperature_values)) # linear interpolation in log-log space
@@ -170,13 +185,29 @@ for time in range(len(times)):
 				return YTArray(convert_T_over_mu_to_T(T_over_mu), "K") # now T
 		        pf.add_field(("gas", "temperature"), function=_temperature_2, force_override=True, units="K")
 
-		# GAS PARTICLE FILEDS FOR SPH CODES
-		if codes[code] == 'CHANGA' or codes[code] == 'GASOLINE' or codes[code] == 'GEAR' or codes[code] == 'GIZMO':
-			PartType_to_use = "Gas"
-			MassType_to_use = "Mass"
-		elif codes[code] == "GADGET-3":
-			PartType_to_use = "PartType0"				
-			MassType_to_use = "Masses"
+		def _density_squared(field, data):  
+			return data[("gas", "density")]**2
+		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
+
+                if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
+			def _cylindrical_z_abs(field, data):
+				return numpy.abs(data[("index", "cylindrical_z")])
+			pf.add_field(("index", "cylindrical_z_abs"), function=_cylindrical_z_abs, take_log=False, particle_type=False, units="cm") 
+		else:
+			def _particle_position_cylindrical_z_abs(field, data):
+				return numpy.abs(data[(PartType_to_use, "particle_position_cylindrical_z")])
+			pf.add_field((PartType_to_use, "particle_position_cylindrical_z_abs"), function=_particle_position_cylindrical_z_abs, take_log=False, particle_type=True, units="cm") 
+			# particle_type=False doesn't make sense, but is critical for PhasePlot/ProfilePlot to work
+			# requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
+			def _Density_2(field, data):
+				return data[(PartType_to_use, "Density")].in_units('g/cm**3')
+			pf.add_field((PartType_to_use, "Density_2"), function=_Density_2, take_log=True, particle_type=False, display_name="Density", units="g/cm**3") 
+			def _Temperature_2(field, data):
+				return data[(PartType_to_use, "Temperature")].in_units('K')
+			pf.add_field((PartType_to_use, "Temperature_2"), function=_Temperature_2, take_log=True, particle_type=False, display_name="Temperature", units="K") 
+			def _Mass_2(field, data):
+				return data[(PartType_to_use, MassType_to_use)].in_units('Msun')
+			pf.add_field((PartType_to_use, "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")				
 
 		# AXIS SWAP & NORMAL VECTOR
                 if codes[code] == 'GEAR':
@@ -212,7 +243,7 @@ for time in range(len(times)):
 		 			     center + YTArray([figure_width, figure_width, figure_width], 'kpc')) # projected images made using a (2*figure_width)^3 box for AMR codes
 		else:
 		 	proj_region = pf.all_data()
-	
+			
 		# DENSITY MAPS
 		if draw_density_map == 1: 
 			for ax in range(1, 3):  
@@ -256,17 +287,6 @@ for time in range(len(times)):
 				plot3 = p3.plots[("gas", "cell_mass")]
 			else:
 				# Because ParticlePhasePlot doesn't yet work for a log-log PDF for some reason, I will do the following trick.  
-				# particle_type=False doesn't make sense, but is critical for PhasePlot to work
-				# requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
-				def _Density_2(field, data):
-					return data[(PartType_to_use, "Density")].in_units('g/cm**3')
-				pf.add_field((PartType_to_use, "Density_2"), function=_Density_2, take_log=True, particle_type=False, display_name="Density", units="g/cm**3") 
-				def _Temperature_2(field, data):
-					return data[(PartType_to_use, "Temperature")].in_units('K')
-				pf.add_field((PartType_to_use, "Temperature_2"), function=_Temperature_2, take_log=True, particle_type=False, display_name="Temperature", units="K") 
-				def _Mass_2(field, data):
-					return data[(PartType_to_use, MassType_to_use)].in_units('Msun')
-				pf.add_field((PartType_to_use, "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")				
 				p3 = PhasePlot(sp, (PartType_to_use, "Density_2"), (PartType_to_use, "Temperature_2"), (PartType_to_use, "Mass_2"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
 				p3.set_zlim((PartType_to_use, "Mass_2"), 1e3, 1e8)
 				plot3 = p3.plots[(PartType_to_use, "Mass_2")]
@@ -326,8 +346,9 @@ for time in range(len(times)):
 					p5 = ProfilePlot(sp_dense, ("index", "cylindrical_r"),  ("gas", "cylindrical_tangential_velocity"), \
 								 weight_field=("gas", "cell_mass"), n_bins=50, x_log=False)
 					p5.set_log("cylindrical_tangential_velocity", False)
+					p5.set_log("cylindrical_r", False)
 					p5.set_unit("cylindrical_r", 'kpc')
-					p5.set_xlim(0, 14)
+					p5.set_xlim(1e-3, 15)
 					p5.set_ylim("cylindrical_tangential_velocity", -100, 350)
 					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["cylindrical_tangential_velocity"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
 					pos_vel_xs[time].append(p5.profiles[0].x.in_units('kpc').d)
@@ -336,8 +357,9 @@ for time in range(len(times)):
 					p5 = ProfilePlot(sp, (PartType_to_use, "particle_position_cylindrical_radius"), (PartType_to_use, "particle_velocity_cylindrical_theta"), \
 								 weight_field=(PartType_to_use, MassType_to_use), n_bins=50, x_log=False)
 					p5.set_log("particle_velocity_cylindrical_theta", False)
+					p5.set_log("particle_position_cylindrical_radius", False)
 					p5.set_unit("particle_position_cylindrical_radius", 'kpc')
-					p5.set_xlim(0, 14)
+					p5.set_xlim(1e-3, 15)
 					p5.set_ylim("particle_velocity_cylindrical_theta", -100, 350)
 					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
 					pos_vel_xs[time].append(p5.profiles[0].x.in_units('kpc').d)
@@ -348,29 +370,66 @@ for time in range(len(times)):
 				at = AnchoredText("%s" % codes[code], loc=4, prop=dict(size=10), frameon=True)
 				grid_pos_vel_PDF[time][code].axes.add_artist(at)
 
-		# DENSITY DF
+		# DENSITY DF (DISTRIBUTION FUNCTION)
 		if draw_density_DF == 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
 			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
-				p6 = ProfilePlot(sp, ("gas", "density"),  ("gas", "cell_mass"), weight_field=None, n_bins=50, x_log=True, accumulation=True, fractional=False)
+				p6 = ProfilePlot(sp, ("gas", "density"),  ("gas", "cell_mass"), weight_field=None, n_bins=50, x_log=True, accumulation=True)
 				p6.set_log("cell_mass", True)
+				p6.set_xlim(1e-29, 1e-21)
 				density_DF_xs[time].append(p6.profiles[0].x.in_units('g/cm**3').d)
 				density_DF_profiles[time].append(p6.profiles[0]["cell_mass"].in_units('Msun').d)
 			else:
 				# Because ParticleProfilePlot doesn't exist, I will do the following trick.  
-				# particle_type=False doesn't make sense, but is critical for ProfilePlot to work
-				# requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
-				def _Density_2(field, data):
-					return data[(PartType_to_use, "Density")].in_units('g/cm**3')
-				pf.add_field((PartType_to_use, "Density_2"), function=_Density_2, take_log=True, particle_type=False, display_name="Density", units="g/cm**3") 
-				def _Mass_2(field, data):
-					return data[(PartType_to_use, MassType_to_use)].in_units('Msun')
-				pf.add_field((PartType_to_use, "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")				
-				p6 = ProfilePlot(sp, (PartType_to_use, "Density_2"),  (PartType_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=True, accumulation=True, fractional=False)
+				p6 = ProfilePlot(sp, (PartType_to_use, "Density_2"),  (PartType_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=True, accumulation=True)
 				p6.set_log("Mass_2", True)
+				p6.set_xlim(1e-29, 1e-21)
 				density_DF_xs[time].append(p6.profiles[0].x.in_units('g/cm**3').d)
 				density_DF_profiles[time].append(p6.profiles[0]["Mass_2"].in_units('Msun').d)
 
+		# CYLINDRICAL RADIUS DF + RADIALLY-BINNED GAS SURFACE DENSITY 
+		if draw_radius_DF == 1:
+			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
+			sp.set_field_parameter("normal", disk_normal_vector) 
+			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
+				p7 = ProfilePlot(sp, ("index", "cylindrical_r"),  ("gas", "cell_mass"), weight_field=None, n_bins=50, x_log=False, accumulation=False)
+				p7.set_log("cell_mass", True)
+				p7.set_log("cylindrical_r", False)
+				p7.set_unit("cylindrical_r", 'kpc')
+				p7.set_xlim(1e-3, 15) # this doesn't work?
+				radius_DF_xs[time].append(p7.profiles[0].x.in_units('kpc').d)
+				radius_DF_profiles[time].append(p7.profiles[0]["cell_mass"].in_units('Msun').d)
+			else:
+				p7 = ProfilePlot(sp, (PartType_to_use, "particle_position_cylindrical_radius"),  (PartType_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=False, accumulation=False)
+				p7.set_log("Mass_2", True)
+				p7.set_log("particle_position_cylindrical_radius", False)
+				p7.set_unit("particle_position_cylindrical_radius", 'kpc')
+				p7.set_xlim(1e-3, 15) # this doesn't work?
+				radius_DF_xs[time].append(p7.profiles[0].x.in_units('kpc').d)
+				radius_DF_profiles[time].append(p7.profiles[0]["Mass_2"].in_units('Msun').d)
+
+		# VERTICAL HEIGHT DF + VERTICALLY-BINNED GAS SURFACE DENSITY 
+		if draw_height_DF == 1:
+			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
+			sp.set_field_parameter("normal", disk_normal_vector) 
+			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
+				p8 = ProfilePlot(sp, ("index", "cylindrical_z_abs"),  ("gas", "cell_mass"), weight_field=None, n_bins=30, x_log=False, accumulation=False)
+				p8.set_log("cell_mass", True)
+				p8.set_log("cylindrical_z_abs", False)
+				p8.set_unit("cylindrical_z_abs", 'kpc')
+				p8.set_xlim(1e-3, 1.4)
+				height_DF_xs[time].append(p8.profiles[0].x.in_units('kpc').d)
+				height_DF_profiles[time].append(p8.profiles[0]["cell_mass"].in_units('Msun').d)
+			else:
+				p8 = ProfilePlot(sp, (PartType_to_use, "particle_position_cylindrical_z_abs"),  (PartType_to_use, "Mass_2"), weight_field=None, n_bins=30, x_log=False, accumulation=False)
+				p8.set_log("Mass_2", True)
+				p8.set_log("particle_position_cylindrical_z_abs", False)
+				p8.set_unit("particle_position_cylindrical_z_abs", 'kpc')
+				p8.set_xlim(1e-3, 1.4)
+				height_DF_xs[time].append(p8.profiles[0].x.in_units('kpc').d)
+				height_DF_profiles[time].append(p8.profiles[0]["Mass_2"].in_units('Msun').d)
+
+	# SAVE FIGURES
 	if draw_density_map == 1:
 		fig_density_map[time].savefig("Sigma_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_temperature_map == 1:
@@ -386,8 +445,8 @@ for time in range(len(times)):
 				lines = plt.plot(pos_vel_xs[time][code], pos_vel_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
 			plt.xlim(0, 14)
 			plt.ylim(-100, 350)
-			plt.xlabel("Cylindrical Radius ($\mathrm{kpc}$)")
-			plt.ylabel("Rotational Velocity ($\mathrm{km/s}$)")
+			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+			plt.ylabel("$\mathrm{Rotational\ Velocity\ (km/s)}$")
 			plt.legend(codes, loc=4, frameon=True)
 			leg = plt.gca().get_legend()
 			ltext = leg.get_texts()
@@ -403,11 +462,84 @@ for time in range(len(times)):
 		plt.semilogy()
 		plt.xlim(1e-29, 1e-21)
 		plt.ylim(1e5, 2e10)
-		plt.xlabel("Density ($\mathrm{g}/\mathrm{cm}^3$)")
-		plt.ylabel("Mass ($\mathrm{M}_{\odot}$)")
+		plt.xlabel("$\mathrm{Density\ (g/cm^3)}$")
+		plt.ylabel("$\mathrm{Mass\ (M_{\odot})}$")
 		plt.legend(codes, loc=4, frameon=True)
 		leg = plt.gca().get_legend()
 		ltext = leg.get_texts()
 		plt.setp(ltext, fontsize='xx-small')
 		plt.savefig("density_DF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
+	if draw_radius_DF == 1:
+		plt.clf()
+		plt.subplot(111, aspect=1)
+		for code in range(len(codes)):
+			lines = plt.plot(radius_DF_xs[time][code], np.add.accumulate(radius_DF_profiles[time][code]), color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.semilogy()
+		plt.xlim(0, 14)
+		plt.ylim(1e7, 2e10)
+		plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+		plt.ylabel("$\mathrm{Mass\ (M_{\odot})}$")
+		plt.legend(codes, loc=4, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='small')
+		plt.savefig("radius_DF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+
+		plt.clf()
+		plt.subplot(111, aspect=1)
+		for code in range(len(codes)):
+			surface_density = []
+			for radius in range(len(radius_DF_profiles[time][code])):
+				if radius == 0:
+					surface_area = 4*np.pi*(radius_DF_xs[time][code][radius]*1e3)**2 # in pc^2
+				else:
+					surface_area = 4*np.pi*((radius_DF_xs[time][code][radius]*1e3)**2 - (radius_DF_xs[time][code][radius-1]*1e3)**2)
+				surface_density.append(radius_DF_profiles[time][code][radius] / surface_area)
+			lines = plt.plot(radius_DF_xs[time][code], surface_density, color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.semilogy()
+		plt.xlim(0, 14)
+		plt.ylim(1e-1, 5e3)
+		plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+		plt.ylabel("$\mathrm{Surface\ Density\ (M_{\odot}/pc^2)}$")
+		plt.legend(codes, loc=1, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='small')
+		plt.savefig("gas_surface_density_radial_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
+	if draw_height_DF == 1:
+		plt.clf()
+		plt.subplot(111, aspect=0.5)
+		for code in range(len(codes)):
+			lines = plt.plot(height_DF_xs[time][code], np.add.accumulate(height_DF_profiles[time][code]), color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.semilogy()
+		plt.xlim(0, 1.4)
+		plt.ylim(1e9, 2e10)
+		plt.xlabel("$\mathrm{Vertical\ Height\ (kpc)}$")
+		plt.ylabel("$\mathrm{Mass\ (M_{\odot})}$")
+		plt.legend(codes, loc=4, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='small')
+		plt.savefig("height_DF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+
+		plt.clf()
+		plt.subplot(111, aspect=0.8)
+		for code in range(len(codes)):
+			surface_density = []
+			for height in range(len(height_DF_profiles[time][code])):
+				surface_area = height_DF_xs[time][code][height]*1e3 * figure_width*1e3 # in pc^2
+				surface_density.append(height_DF_profiles[time][code][height] / surface_area)
+			lines = plt.plot(height_DF_xs[time][code], surface_density, color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.semilogy()
+		plt.xlim(0, 1.4)
+		plt.ylim(1e-1, 3e3)
+		plt.xlabel("$\mathrm{Vertical\ Height\ (kpc)}$")
+		plt.ylabel("$\mathrm{Surface\ Density\ (M_{\odot}/pc^2)}$")
+		plt.legend(codes, loc=1, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='small')
+		plt.savefig("gas_surface_density_vertical_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
