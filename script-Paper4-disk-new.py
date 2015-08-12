@@ -57,9 +57,9 @@ gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 color_names              = ['red', 'magenta', 'gold', 'lime', 'green', 'cyan', 'blue', 'blueviolet', 'black']
 linestyle_names          = ['-', '--', '-.']
 
-draw_density_map       = 1         # 0/1   = OFF/ON
-draw_temperature_map   = 1         # 0/1   = OFF/ON
-draw_PDF               = 1         # 0/1   = OFF/ON
+draw_density_map       = 0         # 0/1   = OFF/ON
+draw_temperature_map   = 0         # 0/1   = OFF/ON
+draw_PDF               = 0         # 0/1   = OFF/ON
 draw_pos_vel_PDF       = 2         # 0/1/2 = OFF/ON/ON with 1D profile
 draw_density_DF        = 0         # 0/1   = OFF/ON
 draw_radius_DF         = 0         # 0/1   = OFF/ON
@@ -529,7 +529,10 @@ for time in range(len(times)):
 		for code in range(len(codes)):
 			surface_density = []
 			for height in range(len(height_DF_profiles[time][code])):
-				surface_area = height_DF_xs[time][code][height]*1e3 * figure_width*1e3 # in pc^2
+				if height == 0:
+					surface_area = height_DF_xs[time][code][height]*1e3 * figure_width*1e3 *2 # surface_area = 2*d(height)*figure_width in pc^2
+				else:
+					surface_area = (height_DF_xs[time][code][height] - height_DF_xs[time][code][height-1])*1e3 * figure_width*1e3 * 2
 				surface_density.append(height_DF_profiles[time][code][height] / surface_area)
 			lines = plt.plot(height_DF_xs[time][code], surface_density, color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
 		plt.semilogy()
