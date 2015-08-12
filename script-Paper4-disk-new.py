@@ -348,7 +348,7 @@ for time in range(len(times)):
 					p5.set_log("cylindrical_tangential_velocity", False)
 					p5.set_log("cylindrical_r", False)
 					p5.set_unit("cylindrical_r", 'kpc')
-					p5.set_xlim(1e-3, 15)
+					p5.set_xlim(1e-3, 14)
 					p5.set_ylim("cylindrical_tangential_velocity", -100, 350)
 					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["cylindrical_tangential_velocity"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
 					pos_vel_xs[time].append(p5.profiles[0].x.in_units('kpc').d)
@@ -359,7 +359,7 @@ for time in range(len(times)):
 					p5.set_log("particle_velocity_cylindrical_theta", False)
 					p5.set_log("particle_position_cylindrical_radius", False)
 					p5.set_unit("particle_position_cylindrical_radius", 'kpc')
-					p5.set_xlim(1e-3, 15)
+					p5.set_xlim(1e-3, 14)
 					p5.set_ylim("particle_velocity_cylindrical_theta", -100, 350)
 					line = ln.Line2D(p5.profiles[0].x.in_units('kpc'), p5.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
 					pos_vel_xs[time].append(p5.profiles[0].x.in_units('kpc').d)
@@ -396,7 +396,7 @@ for time in range(len(times)):
 				p7.set_log("cell_mass", True)
 				p7.set_log("cylindrical_r", False)
 				p7.set_unit("cylindrical_r", 'kpc')
-				p7.set_xlim(1e-3, 15) # this doesn't work?
+				p7.set_xlim(1e-3, 15) 
 				radius_DF_xs[time].append(p7.profiles[0].x.in_units('kpc').d)
 				radius_DF_profiles[time].append(p7.profiles[0]["cell_mass"].in_units('Msun').d)
 			else:
@@ -404,7 +404,7 @@ for time in range(len(times)):
 				p7.set_log("Mass_2", True)
 				p7.set_log("particle_position_cylindrical_radius", False)
 				p7.set_unit("particle_position_cylindrical_radius", 'kpc')
-				p7.set_xlim(1e-3, 15) # this doesn't work?
+				p7.set_xlim(1e-3, 15) 
 				radius_DF_xs[time].append(p7.profiles[0].x.in_units('kpc').d)
 				radius_DF_profiles[time].append(p7.profiles[0]["Mass_2"].in_units('Msun').d)
 
@@ -530,14 +530,14 @@ for time in range(len(times)):
 			surface_density = []
 			for height in range(len(height_DF_profiles[time][code])):
 				if height == 0:
-					surface_area = height_DF_xs[time][code][height]*1e3 * figure_width*1e3 *2 # surface_area = 2*d(height)*figure_width in pc^2
+					surface_area = height_DF_xs[time][code][height]*1e3 * figure_width*1e3 * 2 # surface_area = 2*d(height)*figure_width in pc^2
 				else:
 					surface_area = (height_DF_xs[time][code][height] - height_DF_xs[time][code][height-1])*1e3 * figure_width*1e3 * 2
 				surface_density.append(height_DF_profiles[time][code][height] / surface_area)
 			lines = plt.plot(height_DF_xs[time][code], surface_density, color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
 		plt.semilogy()
 		plt.xlim(0, 1.4)
-		plt.ylim(1e-1, 3e3)
+		plt.ylim(1e-1, 5e3)
 		plt.xlabel("$\mathrm{Vertical\ Height\ (kpc)}$")
 		plt.ylabel("$\mathrm{Surface\ Density\ (M_{\odot}/pc^2)}$")
 		plt.legend(codes, loc=1, frameon=True)
