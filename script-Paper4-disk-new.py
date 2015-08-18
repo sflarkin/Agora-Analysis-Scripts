@@ -24,42 +24,44 @@ from yt.fields.particle_fields import add_nearest_neighbor_field
 mylog.setLevel(1)
 
 codes = ['ART-I', 'ART-II', 'CHANGA', 'ENZO', 'GADGET-3', 'GASOLINE', 'GEAR', 'GIZMO', 'RAMSES']
-filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_02350.d'],
-	     ['./ART-II/noSF_aggrRef/OUT/AGORA_LOW_000000.art', './ART-II/noSF_aggrRef/OUT/AGORA_LOW_000084.art'],
-	     ['./CHANGA/disklow/disklow.000000', './CHANGA/disklow/disklow.000500'], 
-	     ['./ENZO/DD0000/DD0000', './ENZO/DD0100/DD0100'],
- 	     ['./GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', './GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5'],
- 	     ['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00355'],
-  	     ['./GEAR/snapshot_0000', './GEAR/snapshot_0500'],
- 	     ['./GIZMO/snapshot_000', './GIZMO/snapshot_100_hsml'],
- 	     ['./RAMSES/output_00001/info_00001.txt', './RAMSES/output_00068/info_00068.txt']]
+file_location = '../../AGORA-DISK-repository-for-use/Grackle+noSF/'
+#file_location = '/global/homes/m/mornkr/agora-link/AGORA-DISK-repository-for-use/Grackle+noSF/'
+filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d'],
+	     [file_location+'ART-II/noSF_aggrRef/OUT/AGORA_LOW_000000.art', file_location+'ART-II/noSF_aggrRef/OUT/AGORA_LOW_000084.art'],
+	     [file_location+'CHANGA/disklow/disklow.000000', file_location+'CHANGA/disklow/disklow.000500'], 
+	     [file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0100/DD0100'],
+ 	     [file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5'],
+ 	     [file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00355'],
+  	     [file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500'],
+ 	     [file_location+'GIZMO/snapshot_000', file_location+'GIZMO/snapshot_100_hsml'],
+ 	     [file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00068/info_00068.txt']]
 # codes = ['ART-I']
-# filenames = [['./ART-I/IC/AGORA_Galaxy_LOW.d', './ART-I/t0.5Gyr/10MpcBox_csf512_02350.d']]
+# filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d']]
 # codes = ['ART-II']
-# filenames = [['./ART-II/noSF_aggrRef/OUT/AGORA_LOW_000000.art', './ART-II/noSF_aggrRef/OUT/AGORA_LOW_000084.art']]
+# filenames = [[file_location+'ART-II/noSF_aggrRef/OUT/AGORA_LOW_000000.art', file_location+'ART-II/noSF_aggrRef/OUT/AGORA_LOW_000084.art']]
 # codes = ['CHANGA']
-# filenames = [['./CHANGA/disklow/disklow.000000', './CHANGA/disklow/disklow.000500']]
+# filenames = [[file_location+'CHANGA/disklow/disklow.000000', file_location+'CHANGA/disklow/disklow.000500']]
 # codes = ['ENZO']
-# filenames = [['./ENZO/DD0000/DD0000', './ENZO/DD0100/DD0100']]
+# filenames = [[file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0100/DD0100']]
 # codes = ['GADGET-3']
-# filenames = [['./GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', './GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5']]
+# filenames = [[file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5']]
 # codes = ['GASOLINE']
-# filenames = [['./GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', './GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00355']]
+# filenames = [[file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00355']]
 # codes = ['GEAR']
-# filenames = [['./GEAR/snapshot_0000', './GEAR/snapshot_0500']]
+# filenames = [[file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500']]
 # codes = ['GIZMO']
-# filenames = [['./GIZMO/snapshot_000', './GIZMO/snapshot_100_hsml']]
+# filenames = [[file_location+'GIZMO/snapshot_000', file_location+'GIZMO/snapshot_100_hsml']]
 # codes = ['RAMSES']
-# filenames = [['./RAMSES/output_00001/info_00001.txt', './RAMSES/output_00068/info_00068.txt']] 
+# filenames = [[file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00068/info_00068.txt']] 
 gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 			    'UnitMass_in_g'            :   1.989e+43,
 			    'UnitVelocity_in_cm_per_s' :      100000}
 color_names              = ['red', 'magenta', 'gold', 'lime', 'green', 'cyan', 'blue', 'blueviolet', 'black']
 linestyle_names          = ['-', '--', '-.']
 
-draw_density_map       = 0         # 0/1   = OFF/ON
-draw_temperature_map   = 0         # 0/1   = OFF/ON
-draw_PDF               = 0         # 0/1   = OFF/ON
+draw_density_map       = 1         # 0/1   = OFF/ON
+draw_temperature_map   = 1         # 0/1   = OFF/ON
+draw_PDF               = 1         # 0/1   = OFF/ON
 draw_pos_vel_PDF       = 2         # 0/1/2 = OFF/ON/ON with 1D profile
 draw_density_DF        = 0         # 0/1   = OFF/ON
 draw_radius_DF         = 0         # 0/1   = OFF/ON
@@ -69,6 +71,7 @@ times                  = [0, 500]  # in Myr
 figure_width           = 30        # in kpc
 n_ref                  = 256       # for SPH codes
 over_refine_factor     = 1         # for SPH codes
+disk_normal_vector     = [0.0, 0.0, 1.0]
 
 fig_density_map        = [] 
 fig_temperature_map    = []
@@ -130,8 +133,12 @@ for time in range(len(times)):
 			pf = load(filenames[code][time], n_ref=n_ref, over_refine_factor=over_refine_factor)
 	        elif codes[code] == 'GADGET-3':
 			pf = load(filenames[code][time], unit_base = gadget_default_unit_base, bounding_box=[[-1000.0, 1000.0], [-1000.0, 1000.0], [-1000.0,1000.0]], n_ref=n_ref, over_refine_factor=over_refine_factor)
-                elif codes[code] == 'GEAR': # GEAR frontend currently not implemented; for this to work I removed the check for RuntimeError in read_record() of yt/utilities/fortran_utils.py
-			pf = GadgetDataset(filenames[code][time], unit_base = gadget_default_unit_base, bounding_box=[[-1000.0, 1000.0], [-1000.0, 1000.0], [-1000.0,1000.0]], header_spec="default+pad256", n_ref=n_ref, over_refine_factor=over_refine_factor)
+                elif codes[code] == 'GEAR': 
+			from yt.frontends.gadget.definitions import gadget_header_specs
+			from yt.frontends.gadget.definitions import gadget_ptype_specs
+			gadget_header_specs["chemistry"] = (('h1',  4, 'c'),('h2',  4, 'c'),('empty',  256, 'c'),)
+			gear_ptype_specs = ("Gas", "Stars", "Halo", "Disk", "Bulge", "Bndry")
+			pf = GadgetDataset(filenames[code][time], unit_base = gadget_default_unit_base, bounding_box=[[-1000.0, 1000.0], [-1000.0, 1000.0], [-1000.0,1000.0]], header_spec="default+chemistry", ptype_spec=gear_ptype_specs, n_ref=n_ref, over_refine_factor=over_refine_factor)
 	        elif codes[code] == 'GIZMO':
 			pf = load(filenames[code][time], unit_base = gadget_default_unit_base, bounding_box=[[-1000.0, 1000.0], [-1000.0, 1000.0], [-1000.0,1000.0]], field_spec="agora_unlv", n_ref=n_ref, over_refine_factor=over_refine_factor)
 		else:
@@ -139,14 +146,25 @@ for time in range(len(times)):
 
 		# GAS PARTICLE FILEDS FOR SPH CODES
 		if codes[code] == 'CHANGA' or codes[code] == 'GASOLINE' or codes[code] == 'GEAR' or codes[code] == 'GIZMO':
-			PartType_to_use = "Gas"
+			PartType_Gas_to_use = "Gas"
 			MassType_to_use = "Mass"
 		elif codes[code] == "GADGET-3":
-			PartType_to_use = "PartType0"				
+			PartType_Gas_to_use = "PartType0"				
 			MassType_to_use = "Masses"
 
-		# ADDITIONAL FIELDS
-                if codes[code] == 'RAMSES': 
+		# AXIS SWAP FOR PLOT COLLECTION
+		pf.coordinates.x_axis[1] = 0
+		pf.coordinates.y_axis[1] = 2
+		pf.coordinates.x_axis['y'] = 0
+		pf.coordinates.y_axis['y'] = 2
+
+		# ADDITIONAL FIELDS I
+		def _density_squared(field, data):  
+			return data[("gas", "density")]**2
+		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
+		
+		# ADDITIONAL FIELDS II: TEMPERATURE
+                if codes[code] == 'GEAR' or codes[code] == 'RAMSES': 
 			# From grackle/src/python/utilities/convenience.py: Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
 			def calc_mu_table_local(temperature):
 				tt = np.array([1.0e+01, 1.0e+02, 1.0e+03, 1.0e+04, 1.3e+04, 2.1e+04, 3.4e+04, 6.3e+04, 1.0e+05, 1.0e+09])
@@ -170,71 +188,50 @@ for time in range(len(times)):
 				logT_over_mu = np.log(T_over_mu)
 				logT = np.interp(logT_over_mu, np.log(T_over_mu_values), np.log(temperature_values)) # linear interpolation in log-log space
 				return np.exp(logT)
-			# The pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting yt/frontends/ramses/fields.py)
-			def _temperature_2(field, data):  
-				T_J = 1800.0  # in K
-				n_J = 8.0     # in H/cc
-				gamma_0 = 2.0 
-				x_H = 0.76    
-				mH = 1.66e-24      # from pymses/utils/constants/__init__.py  (vs. in yt, mass_hydrogen_cgs = 1.007947*amu_cgs = 1.007947*1.660538921e-24 = 1.6737352e-24)
-				kB = 1.3806504e-16 # from pymses/utils/constants/__init__.py  (vs. in yt, boltzmann_constant_cgs = 1.3806488e-16)
-				if time != 0:
-					T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB - T_J * (data["gas", "density"].d * x_H / mH / n_J)**(gamma_0 - 1.0) # T/mu = T2 in Ramses
-				else:
-				  	T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB # IC: no pressure support
-				return YTArray(convert_T_over_mu_to_T(T_over_mu), "K") # now T
-		        pf.add_field(("gas", "temperature"), function=_temperature_2, force_override=True, units="K")
+			if codes[code] == 'GEAR':
+				def _Temperature_3(field, data):  
+					gamma = 5.0/3.0
+					T_over_mu = (data[PartType_Gas_to_use, "InternalEnergy"] * (gamma-1) * constants.mass_hydrogen_cgs / constants.boltzmann_constant_cgs).in_units('K').d # T/mu
+					return YTArray(convert_T_over_mu_to_T(T_over_mu), 'K') # now T
+				pf.add_field((PartType_Gas_to_use, "Temperature"), function=_Temperature_3, particle_type=True, force_override=True, units="K")
+			elif codes[code] == 'RAMSES':
+				# The pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting yt/frontends/ramses/fields.py)
+				def _temperature_3(field, data):  
+					T_J = 1800.0  # in K
+					n_J = 8.0     # in H/cc
+					gamma_0 = 2.0 
+					x_H = 0.76    
+					mH = 1.66e-24      # from pymses/utils/constants/__init__.py  (vs. in yt, mass_hydrogen_cgs = 1.007947*amu_cgs = 1.007947*1.660538921e-24 = 1.6737352e-24)
+					kB = 1.3806504e-16 # from pymses/utils/constants/__init__.py  (vs. in yt, boltzmann_constant_cgs = 1.3806488e-16)
+					if time != 0:
+						T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB - T_J * (data["gas", "density"].d * x_H / mH / n_J)**(gamma_0 - 1.0) # T/mu = T2 in Ramses
+					else:
+						T_over_mu = data["gas", "pressure"].d/data["gas", "density"].d * mH / kB # IC: no pressure support
+					return YTArray(convert_T_over_mu_to_T(T_over_mu), 'K') # now T
+				pf.add_field(("gas", "temperature"), function=_temperature_3, force_override=True, units="K")
 
-		def _density_squared(field, data):  
-			return data[("gas", "density")]**2
-		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
-
+		# ADDITIONAL FIELDS III
                 if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 			def _cylindrical_z_abs(field, data):
 				return numpy.abs(data[("index", "cylindrical_z")])
 			pf.add_field(("index", "cylindrical_z_abs"), function=_cylindrical_z_abs, take_log=False, particle_type=False, units="cm") 
 		else:
 			def _particle_position_cylindrical_z_abs(field, data):
-				return numpy.abs(data[(PartType_to_use, "particle_position_cylindrical_z")])
-			pf.add_field((PartType_to_use, "particle_position_cylindrical_z_abs"), function=_particle_position_cylindrical_z_abs, take_log=False, particle_type=True, units="cm") 
+				return numpy.abs(data[(PartType_Gas_to_use, "particle_position_cylindrical_z")])
+			pf.add_field((PartType_Gas_to_use, "particle_position_cylindrical_z_abs"), function=_particle_position_cylindrical_z_abs, take_log=False, particle_type=True, units="cm") 
 			# particle_type=False doesn't make sense, but is critical for PhasePlot/ProfilePlot to work
 			# requires a change in data_objects/data_container.py: remove raise YTFieldTypeNotFound(ftype)
 			def _Density_2(field, data):
-				return data[(PartType_to_use, "Density")].in_units('g/cm**3')
-			pf.add_field((PartType_to_use, "Density_2"), function=_Density_2, take_log=True, particle_type=False, display_name="Density", units="g/cm**3") 
+				return data[(PartType_Gas_to_use, "Density")].in_units('g/cm**3')
+			pf.add_field((PartType_Gas_to_use, "Density_2"), function=_Density_2, take_log=True, particle_type=False, display_name="Density", units="g/cm**3") 
 			def _Temperature_2(field, data):
-				return data[(PartType_to_use, "Temperature")].in_units('K')
-			pf.add_field((PartType_to_use, "Temperature_2"), function=_Temperature_2, take_log=True, particle_type=False, display_name="Temperature", units="K") 
+				return data[(PartType_Gas_to_use, "Temperature")].in_units('K')
+			pf.add_field((PartType_Gas_to_use, "Temperature_2"), function=_Temperature_2, take_log=True, particle_type=False, display_name="Temperature", units="K") 
 			def _Mass_2(field, data):
-				return data[(PartType_to_use, MassType_to_use)].in_units('Msun')
-			pf.add_field((PartType_to_use, "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")				
+				return data[(PartType_Gas_to_use, MassType_to_use)].in_units('Msun')
+			pf.add_field((PartType_Gas_to_use, "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")				
 
-		# AXIS SWAP & NORMAL VECTOR
-                if codes[code] == 'GEAR':
-			# Temporary fix until GEAR group figures out the issue; currently, [xyz] in GEAR = [yzx] in other codes
-			# pf.coordinates.x_axis = {0: 0, 1: 2, 2: 2, 'x': 0, 'y': 2, 'z': 2} 
-			# pf.coordinates.y_axis = {0: 1, 1: 1, 2: 0, 'x': 1, 'y': 1, 'z': 0}
-			pf.coordinates.x_axis[0] = 0 
-			pf.coordinates.y_axis[0] = 1
-			pf.coordinates.x_axis['x'] = 0
-			pf.coordinates.y_axis['x'] = 1
-			pf.coordinates.y_axis[1] = 1
-			pf.coordinates.y_axis['y'] = 1
-			pf.coordinates.x_axis[2] = 2 
-			pf.coordinates.y_axis[2] = 0
-			pf.coordinates.x_axis['z'] = 2
-			pf.coordinates.y_axis['z'] = 0
-			disk_normal_vector   = [0.0, 1.0, 0.0]
-		else:
-			# From http://nbviewer.ipython.org/gist/ngoldbaum/a753d83a7f8e123b0a2c
-			# pf.coordinates.x_axis = {0: 1, 1: 0, 2: 0, 'x': 1, 'y': 0, 'z': 0} 
-			# pf.coordinates.y_axis = {0: 2, 1: 2, 2: 1, 'x': 2, 'y': 2, 'z': 1}
-			pf.coordinates.x_axis[1] = 0
-			pf.coordinates.y_axis[1] = 2
-			pf.coordinates.x_axis['y'] = 0
-			pf.coordinates.y_axis['y'] = 2
-			disk_normal_vector   = [0.0, 0.0, 1.0]
-
+		# FIND CENTER AND PROJ_REGION
 		v, cen = pf.h.find_max(("gas", "density")) # find the center to keep the galaxy at the center of all the images.
 		sp = pf.sphere(cen, (figure_width, "kpc"))
 		center = sp.quantities.center_of_mass(use_gas=True, use_particles=True).in_units("kpc")
@@ -287,9 +284,9 @@ for time in range(len(times)):
 				plot3 = p3.plots[("gas", "cell_mass")]
 			else:
 				# Because ParticlePhasePlot doesn't yet work for a log-log PDF for some reason, I will do the following trick.  
-				p3 = PhasePlot(sp, (PartType_to_use, "Density_2"), (PartType_to_use, "Temperature_2"), (PartType_to_use, "Mass_2"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
-				p3.set_zlim((PartType_to_use, "Mass_2"), 1e3, 1e8)
-				plot3 = p3.plots[(PartType_to_use, "Mass_2")]
+				p3 = PhasePlot(sp, (PartType_Gas_to_use, "Density_2"), (PartType_Gas_to_use, "Temperature_2"), (PartType_Gas_to_use, "Mass_2"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
+				p3.set_zlim((PartType_Gas_to_use, "Mass_2"), 1e3, 1e8)
+				plot3 = p3.plots[(PartType_Gas_to_use, "Mass_2")]
 
 			p3.set_xlim(1e-29, 1e-21)
 			p3.set_ylim(10, 1e7)
@@ -319,16 +316,16 @@ for time in range(len(times)):
 				p4.set_colorbar_label(("gas", "cell_mass"), "Mass ($\mathrm{M}_{\odot}$)")
 				plot4 = p4.plots[("gas", "cell_mass")]
 			else:
-				pf.field_info[(PartType_to_use, "particle_position_cylindrical_radius")].take_log = False
-				pf.field_info[(PartType_to_use, "particle_velocity_cylindrical_theta")].take_log = False
-				p4 = ParticlePhasePlot(sp, (PartType_to_use, "particle_position_cylindrical_radius"), (PartType_to_use, "particle_velocity_cylindrical_theta"), \
-							       (PartType_to_use, MassType_to_use), weight_field=None, fontsize=12, x_bins=300, y_bins=300)
+				pf.field_info[(PartType_Gas_to_use, "particle_position_cylindrical_radius")].take_log = False
+				pf.field_info[(PartType_Gas_to_use, "particle_velocity_cylindrical_theta")].take_log = False
+				p4 = ParticlePhasePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_velocity_cylindrical_theta"), \
+							       (PartType_Gas_to_use, MassType_to_use), weight_field=None, fontsize=12, x_bins=300, y_bins=300)
 				p4.set_unit("particle_position_cylindrical_radius", 'kpc')
 				p4.set_unit("particle_velocity_cylindrical_theta", 'km/s')
 				p4.set_unit(MassType_to_use, 'Msun')
-				p4.set_zlim((PartType_to_use, MassType_to_use), 1e3, 1e8)
-				p4.set_colorbar_label((PartType_to_use, MassType_to_use), "Mass ($\mathrm{M}_{\odot}$)")
-				plot4 = p4.plots[(PartType_to_use, MassType_to_use)]
+				p4.set_zlim((PartType_Gas_to_use, MassType_to_use), 1e3, 1e8)
+				p4.set_colorbar_label((PartType_Gas_to_use, MassType_to_use), "Mass ($\mathrm{M}_{\odot}$)")
+				plot4 = p4.plots[(PartType_Gas_to_use, MassType_to_use)]
 
 			p4.set_xlabel("Cylindrical Radius (kpc)")
 			p4.set_ylabel("Rotational Velocity (km/s)")
@@ -354,8 +351,8 @@ for time in range(len(times)):
 					pos_vel_xs[time].append(p5.profiles[0].x.in_units('kpc').d)
 					pos_vel_profiles[time].append(p5.profiles[0]["cylindrical_tangential_velocity"].in_units('km/s').d)
 				else:
-					p5 = ProfilePlot(sp, (PartType_to_use, "particle_position_cylindrical_radius"), (PartType_to_use, "particle_velocity_cylindrical_theta"), \
-								 weight_field=(PartType_to_use, MassType_to_use), n_bins=50, x_log=False)
+					p5 = ProfilePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_velocity_cylindrical_theta"), \
+								 weight_field=(PartType_Gas_to_use, MassType_to_use), n_bins=50, x_log=False)
 					p5.set_log("particle_velocity_cylindrical_theta", False)
 					p5.set_log("particle_position_cylindrical_radius", False)
 					p5.set_unit("particle_position_cylindrical_radius", 'kpc')
@@ -381,7 +378,7 @@ for time in range(len(times)):
 				density_DF_profiles[time].append(p6.profiles[0]["cell_mass"].in_units('Msun').d)
 			else:
 				# Because ParticleProfilePlot doesn't exist, I will do the following trick.  
-				p6 = ProfilePlot(sp, (PartType_to_use, "Density_2"),  (PartType_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=True, accumulation=True)
+				p6 = ProfilePlot(sp, (PartType_Gas_to_use, "Density_2"),  (PartType_Gas_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=True, accumulation=True)
 				p6.set_log("Mass_2", True)
 				p6.set_xlim(1e-29, 1e-21)
 				density_DF_xs[time].append(p6.profiles[0].x.in_units('g/cm**3').d)
@@ -400,7 +397,7 @@ for time in range(len(times)):
 				radius_DF_xs[time].append(p7.profiles[0].x.in_units('kpc').d)
 				radius_DF_profiles[time].append(p7.profiles[0]["cell_mass"].in_units('Msun').d)
 			else:
-				p7 = ProfilePlot(sp, (PartType_to_use, "particle_position_cylindrical_radius"),  (PartType_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=False, accumulation=False)
+				p7 = ProfilePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"),  (PartType_Gas_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=False, accumulation=False)
 				p7.set_log("Mass_2", True)
 				p7.set_log("particle_position_cylindrical_radius", False)
 				p7.set_unit("particle_position_cylindrical_radius", 'kpc')
@@ -413,7 +410,7 @@ for time in range(len(times)):
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
 			sp.set_field_parameter("normal", disk_normal_vector) 
 			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
-				p8 = ProfilePlot(sp, ("index", "cylindrical_z_abs"),  ("gas", "cell_mass"), weight_field=None, n_bins=30, x_log=False, accumulation=False)
+				p8 = ProfilePlot(sp, ("index", "cylindrical_z_abs"),  ("gas", "cell_mass"), weight_field=None, n_bins=10, x_log=False, accumulation=False)
 				p8.set_log("cell_mass", True)
 				p8.set_log("cylindrical_z_abs", False)
 				p8.set_unit("cylindrical_z_abs", 'kpc')
@@ -421,7 +418,7 @@ for time in range(len(times)):
 				height_DF_xs[time].append(p8.profiles[0].x.in_units('kpc').d)
 				height_DF_profiles[time].append(p8.profiles[0]["cell_mass"].in_units('Msun').d)
 			else:
-				p8 = ProfilePlot(sp, (PartType_to_use, "particle_position_cylindrical_z_abs"),  (PartType_to_use, "Mass_2"), weight_field=None, n_bins=30, x_log=False, accumulation=False)
+				p8 = ProfilePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_z_abs"),  (PartType_Gas_to_use, "Mass_2"), weight_field=None, n_bins=10, x_log=False, accumulation=False)
 				p8.set_log("Mass_2", True)
 				p8.set_log("particle_position_cylindrical_z_abs", False)
 				p8.set_unit("particle_position_cylindrical_z_abs", 'kpc')
