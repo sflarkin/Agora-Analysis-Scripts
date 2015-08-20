@@ -31,9 +31,9 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 	     [file_location+'CHANGA/disklow/disklow.000000', file_location+'CHANGA/disklow/disklow.000500'], 
 	     [file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0100/DD0100'],
  	     [file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5'],
- 	     [file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00355'],
+ 	     [file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335'],
   	     [file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500'],
- 	     [file_location+'GIZMO/snapshot_000', file_location+'GIZMO/snapshot_100_hsml'],
+	     [file_location+'GIZMO/snap_000_new_temp', file_location+'GIZMO/snap_100_new_temp'],
  	     [file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00068/info_00068.txt']]
 # codes = ['ART-I']
 # filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d']]
@@ -46,11 +46,11 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 # codes = ['GADGET-3']
 # filenames = [[file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5']]
 # codes = ['GASOLINE']
-# filenames = [[file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00355']]
+# filenames = [[file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335']]
 # codes = ['GEAR']
 # filenames = [[file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500']]
 # codes = ['GIZMO']
-# filenames = [[file_location+'GIZMO/snapshot_000', file_location+'GIZMO/snapshot_100_hsml']]
+# filenames = [[file_location+'GIZMO/snap_000_new_temp', file_location+'GIZMO/snap_100_new_temp']]
 # codes = ['RAMSES']
 # filenames = [[file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00068/info_00068.txt']] 
 gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
@@ -140,7 +140,19 @@ for time in range(len(times)):
 			gear_ptype_specs = ("Gas", "Stars", "Halo", "Disk", "Bulge", "Bndry")
 			pf = GadgetDataset(filenames[code][time], unit_base = gadget_default_unit_base, bounding_box=[[-1000.0, 1000.0], [-1000.0, 1000.0], [-1000.0,1000.0]], header_spec="default+chemistry", ptype_spec=gear_ptype_specs, n_ref=n_ref, over_refine_factor=over_refine_factor)
 	        elif codes[code] == 'GIZMO':
-			pf = load(filenames[code][time], unit_base = gadget_default_unit_base, bounding_box=[[-1000.0, 1000.0], [-1000.0, 1000.0], [-1000.0,1000.0]], field_spec="agora_unlv", n_ref=n_ref, over_refine_factor=over_refine_factor)
+			from yt.frontends.gadget.definitions import gadget_field_specs
+			agora_gizmo = ( "Coordinates",
+					"Velocities",
+					"ParticleIDs",
+					"Mass",
+					("Temperature", "Gas"),
+					("Density", "Gas"),
+					("Electron_Number_Density", "Gas"),
+					("HI_NumberDensity", "Gas"),
+					("SmoothingLength", "Gas"),
+					)
+			gadget_field_specs["agora_gizmo"] = agora_gizmo
+			pf = load(filenames[code][time], unit_base = gadget_default_unit_base, bounding_box=[[-1000.0, 1000.0], [-1000.0, 1000.0], [-1000.0,1000.0]], field_spec="agora_gizmo", n_ref=n_ref, over_refine_factor=over_refine_factor)
 		else:
 			pf = load(filenames[code][time])
 
