@@ -8,6 +8,8 @@
 #        yield incorrect results. 
 #
 #######################################################################
+import matplotlib
+matplotlib.use('Agg')
 import sys
 import math
 import numpy as np
@@ -61,11 +63,14 @@ linestyle_names          = ['-', '--', '-.']
 
 draw_density_map       = 1         # 0/1   = OFF/ON
 draw_temperature_map   = 1         # 0/1   = OFF/ON
+draw_cellsize_map      = 1         # 0/1   = OFF/ON
 draw_PDF               = 1         # 0/1   = OFF/ON
 draw_pos_vel_PDF       = 2         # 0/1/2 = OFF/ON/ON with 1D profile
+draw_rad_height_PDF    = 0         # 0/1/2 = OFF/ON/ON with analytic ftn subtracted
 draw_density_DF        = 0         # 0/1   = OFF/ON
 draw_radius_DF         = 0         # 0/1   = OFF/ON
 draw_height_DF         = 0         # 0/1   = OFF/ON
+draw_cut_through       = 0         # 0/1   = OFF/ON
 add_nametag            = 1         # 0/1   = OFF/ON
 times                  = [0, 500]  # in Myr
 figure_width           = 30        # in kpc
@@ -75,12 +80,16 @@ disk_normal_vector     = [0.0, 0.0, 1.0]
 
 fig_density_map        = [] 
 fig_temperature_map    = []
+fig_cellsize_map       = []
 fig_PDF                = []
 fig_pos_vel_PDF        = []
+fig_rad_height_PDF     = []
 grid_density_map       = []
 grid_temperature_map   = []
+grid_cellsize_map      = []
 grid_PDF               = []
 grid_pos_vel_PDF       = []
+grid_rad_height_PDF    = []
 pos_vel_xs             = []
 pos_vel_profiles       = []
 density_DF_xs          = []
@@ -89,6 +98,10 @@ radius_DF_xs           = []
 radius_DF_profiles     = []
 height_DF_xs           = []
 height_DF_profiles     = []
+cut_through_zs         = []
+cut_through_zvalues    = []
+cut_through_xs         = []
+cut_through_xvalues    = []
 
 for time in range(len(times)):
 	if draw_density_map == 1:
@@ -98,6 +111,10 @@ for time in range(len(times)):
 	if draw_temperature_map == 1:
 		fig_temperature_map  += [plt.figure(figsize=(100,20))]
 		grid_temperature_map += [AxesGrid(fig_temperature_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
+	if draw_cellsize_map == 1:
+		fig_cellsize_map     += [plt.figure(figsize=(100,20))]
+		grid_cellsize_map    += [AxesGrid(fig_cellsize_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
 	if draw_PDF == 1:
 		fig_PDF              += [plt.figure(figsize=(50, 80))]
@@ -109,6 +126,10 @@ for time in range(len(times)):
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
 		pos_vel_xs.append([])
 		pos_vel_profiles.append([])
+	if draw_rad_height_PDF >= 1:
+		fig_rad_height_PDF   += [plt.figure(figsize=(50, 80))]
+		grid_rad_height_PDF  += [AxesGrid(fig_rad_height_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
 	if draw_density_DF == 1:
 		density_DF_xs.append([])
 		density_DF_profiles.append([])
@@ -118,6 +139,11 @@ for time in range(len(times)):
 	if draw_height_DF == 1:
 		height_DF_xs.append([])
 		height_DF_profiles.append([])
+	if draw_cut_through == 1:
+		cut_through_zs.append([])
+		cut_through_zvalues.append([])
+		cut_through_xs.append([])
+		cut_through_xvalues.append([])
 
 for time in range(len(times)):
 	for code in range(len(codes)):
@@ -174,6 +200,12 @@ for time in range(len(times)):
 		def _density_squared(field, data):  
 			return data[("gas", "density")]**2
 		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
+		def _CellSizepc(field,data): 
+			return (data[("index", "cell_volume")].in_units('pc**3'))**(1/3.)
+		pf.add_field(("index", "cell_size"), function=_CellSizepc, units='pc', display_name="$\Delta$ x", take_log=True )
+		def _Inv2CellVolumeCode(field,data): 
+			return data[("index", "cell_volume")]**-2
+		pf.add_field(("index", "cell_volume_inv2"), function=_Inv2CellVolumeCode, units='code_length**(-6)', display_name="Inv2CellVolumeCode", take_log=True)	
 		
 		# ADDITIONAL FIELDS II: TEMPERATURE
                 if codes[code] == 'GEAR' or codes[code] == 'RAMSES': 
@@ -223,10 +255,21 @@ for time in range(len(times)):
 				pf.add_field(("gas", "temperature"), function=_temperature_3, force_override=True, units="K")
 
 		# ADDITIONAL FIELDS III
+		def rho_agora_disk(r, z):
+			r_d = YTArray(3.432, 'kpc')
+			z_d = 0.1*r_d
+			M_d = YTArray(4.297e10, 'Msun')
+			f_gas = 0.2
+			r_0 = (f_gas*M_d / (4.0*np.pi*r_d**2*z_d)).in_units('g/cm**3')
+			return r_0*numpy.exp(-r/r_d)*numpy.exp(-z/z_d)
+
                 if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 			def _cylindrical_z_abs(field, data):
 				return numpy.abs(data[("index", "cylindrical_z")])
 			pf.add_field(("index", "cylindrical_z_abs"), function=_cylindrical_z_abs, take_log=False, particle_type=False, units="cm") 
+			def _density_minus_analytic(field, data):	
+				return data[("gas", "density")] - rho_agora_disk(data[("index", "cylindrical_r")], data[("index", "cylindrical_z_abs")])
+			pf.add_field(("gas", "density_minus_analytic"), function=_density_minus_analytic, take_log=False, particle_type=False, display_name="density residual abs", units="g/cm**3") 
 		else:
 			def _particle_position_cylindrical_z_abs(field, data):
 				return numpy.abs(data[(PartType_Gas_to_use, "particle_position_cylindrical_z")])
@@ -242,6 +285,9 @@ for time in range(len(times)):
 			def _Mass_2(field, data):
 				return data[(PartType_Gas_to_use, MassType_to_use)].in_units('Msun')
 			pf.add_field((PartType_Gas_to_use, "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")				
+			def _Density_2_minus_analytic(field, data):	
+				return data[(PartType_Gas_to_use, "density")] - rho_agora_disk(data[(PartType_Gas_to_use, "particle_position_cylindrical_radius")], data[(PartType_Gas_to_use, "particle_position_cylindrical_z_abs")])
+			pf.add_field((PartType_Gas_to_use, "Density_2_minus_analytic"), function=_Density_2_minus_analytic, take_log=False, particle_type=False, display_name="Density Residual", units="g/cm**3") 
 
 		# FIND CENTER AND PROJ_REGION
 		v, cen = pf.h.find_max(("gas", "density")) # find the center to keep the galaxy at the center of all the images.
@@ -284,6 +330,22 @@ for time in range(len(times)):
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
 				grid_temperature_map[time][code].axes.add_artist(at)
+
+		# CELL-SIZE MAPS
+		if draw_cellsize_map == 1:
+			for ax in range(1, 3):  
+				p25 = ProjectionPlot(pf, ax, ("index", "cell_size"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("index", "cell_volume_inv2"), fontsize=9)
+				p25.set_zlim(("index", "cell_size"), 50, 500)
+				plot25 = p25.plots[("index", "cell_size")]
+				
+				plot25.figure = fig_cellsize_map[time]
+				plot25.axes = grid_cellsize_map[time][(ax-1)*len(codes)+code].axes
+				if code == 0: plot25.cax = grid_cellsize_map[time].cbar_axes[0]
+				p25._setup_plots()
+
+			if add_nametag == 1:
+				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
+				grid_cellsize_map[time][code].axes.add_artist(at)
 
 		# DENSITY-TEMPERATURE PDF
 		if draw_PDF == 1:
@@ -379,18 +441,71 @@ for time in range(len(times)):
 				at = AnchoredText("%s" % codes[code], loc=4, prop=dict(size=10), frameon=True)
 				grid_pos_vel_PDF[time][code].axes.add_artist(at)
 
+		# RADIUS-HEIGHT PDF
+		if draw_rad_height_PDF >= 1:
+			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
+			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
+				if draw_rad_height_PDF == 1:
+					p55 = PhasePlot(sp, ("index", "cylindrical_r"), ("index", "cylindrical_z_abs"), ("gas", "density"), weight_field=("gas", "cell_mass"), fontsize=12, x_bins=200, y_bins=200)
+					p55.set_zlim(("gas", "density"), 1e-26, 1e-21)
+					p55.set_log("cylindrical_r", False)
+					p55.set_log("cylindrical_z_abs", False)
+					p55.set_unit("cylindrical_r", 'kpc')
+					p55.set_unit("cylindrical_z_abs", 'kpc')
+					plot55 = p55.plots[("gas", "density")]
+				elif draw_rad_height_PDF == 2:
+					p55 = PhasePlot(sp, ("index", "cylindrical_r"), ("index", "cylindrical_z_abs"), ("gas", "density_minus_analytic"), weight_field=("gas", "cell_mass"), fontsize=12, x_bins=200, y_bins=200)
+					p55.set_zlim(("gas", "density_minus_analytic"), -1e-24, 1e-24)
+					p55.set_log("cylindrical_r", False)
+					p55.set_log("cylindrical_z_abs", False)
+					p55.set_unit("cylindrical_r", 'kpc')
+					p55.set_unit("cylindrical_z_abs", 'kpc')
+					plot55 = p55.plots[("gas", "density_minus_analytic")]
+			else:
+				# Because ParticlePhasePlot doesn't yet work for a log-log PDF for some reason, I will do the following trick.  
+				if draw_rad_height_PDF == 1:
+					p55 = PhasePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_position_cylindrical_z_abs"), (PartType_Gas_to_use, "Density_2"), weight_field=(PartType_Gas_to_use, "Mass_2"), fontsize=12, x_bins=200, y_bins=200)
+					p55.set_zlim((PartType_Gas_to_use, "Density_2"), 1e-26, 1e-21)
+					p55.set_log("particle_position_cylindrical_radius", False)
+					p55.set_log("particle_position_cylindrical_z_abs", False)
+					p55.set_unit("particle_position_cylindrical_radius", 'kpc')
+					p55.set_unit("particle_position_cylindrical_z_abs", 'kpc')
+					plot55 = p55.plots[(PartType_Gas_to_use, "Density_2")]
+				elif draw_rad_height_PDF == 2:
+					p55 = PhasePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_position_cylindrical_z_abs"), (PartType_Gas_to_use, "Density_2_minus_analytic"), weight_field=(PartType_Gas_to_use, "Mass_2"), fontsize=12, x_bins=200, y_bins=200)
+					p55.set_zlim((PartType_Gas_to_use, "Density_2_minus_analytic"), -1e-24, 1e-24)
+					p55.set_log("particle_position_cylindrical_radius", False)
+					p55.set_log("particle_position_cylindrical_z_abs", False)
+					p55.set_unit("particle_position_cylindrical_radius", 'kpc')
+					p55.set_unit("particle_position_cylindrical_z_abs", 'kpc')
+					plot55 = p55.plots[(PartType_Gas_to_use, "Density_2_minus_analytic")]
+
+			p55.set_xlabel("Cylindrical Radius (kpc)")
+			p55.set_ylabel("Vertical Height (kpc)")
+			p55.set_xlim(0, 14)
+			p55.set_ylim(0, 1.4)
+
+			plot55.figure = fig_rad_height_PDF[time]
+			plot55.axes = grid_rad_height_PDF[time][code].axes
+			if code == 0: plot55.cax = grid_rad_height_PDF[time].cbar_axes[0]
+			p55._setup_plots()
+
+			if add_nametag == 1:
+				at = AnchoredText("%s" % codes[code], loc=1, prop=dict(size=10), frameon=True)
+				grid_rad_height_PDF[time][code].axes.add_artist(at)
+
 		# DENSITY DF (DISTRIBUTION FUNCTION)
 		if draw_density_DF == 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
 			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
-				p6 = ProfilePlot(sp, ("gas", "density"),  ("gas", "cell_mass"), weight_field=None, n_bins=50, x_log=True, accumulation=True)
+				p6 = ProfilePlot(sp, ("gas", "density"),  ("gas", "cell_mass"), weight_field=None, n_bins=50, x_log=True, accumulation=False)
 				p6.set_log("cell_mass", True)
 				p6.set_xlim(1e-29, 1e-21)
 				density_DF_xs[time].append(p6.profiles[0].x.in_units('g/cm**3').d)
 				density_DF_profiles[time].append(p6.profiles[0]["cell_mass"].in_units('Msun').d)
 			else:
 				# Because ParticleProfilePlot doesn't exist, I will do the following trick.  
-				p6 = ProfilePlot(sp, (PartType_Gas_to_use, "Density_2"),  (PartType_Gas_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=True, accumulation=True)
+				p6 = ProfilePlot(sp, (PartType_Gas_to_use, "Density_2"),  (PartType_Gas_to_use, "Mass_2"), weight_field=None, n_bins=50, x_log=True, accumulation=False)
 				p6.set_log("Mass_2", True)
 				p6.set_xlim(1e-29, 1e-21)
 				density_DF_xs[time].append(p6.profiles[0].x.in_units('g/cm**3').d)
@@ -438,11 +553,25 @@ for time in range(len(times)):
 				height_DF_xs[time].append(p8.profiles[0].x.in_units('kpc').d)
 				height_DF_profiles[time].append(p8.profiles[0]["Mass_2"].in_units('Msun').d)
 
+		# DENSITY ALONG THE ORTHO-RAY OBJECT CUTTING THROUGH THE CENTER
+		if draw_cut_through == 1:
+			ray = pf.ortho_ray(2, (center[0].in_units('code_length'), center[1].in_units('code_length'))) # see: http://yt-project.org/doc/visualizing/manual_plotting.html#line-plots
+			srt = np.argsort(ray['z'])
+			cut_through_zs[time].append(np.array(ray['z'][srt].in_units('kpc').d - center[2].in_units('kpc').d)) 
+			cut_through_zvalues[time].append(np.array(ray[("gas", "density")][srt].in_units('g/cm**3').d))
+
+			ray = pf.ortho_ray(0, (center[1].in_units('code_length'), center[2].in_units('code_length'))) 
+			srt = np.argsort(ray['x'])
+			cut_through_xs[time].append(np.array(ray['x'][srt].in_units('kpc').d - center[2].in_units('kpc').d)) 
+			cut_through_xvalues[time].append(np.array(ray[("gas", "density")][srt].in_units('g/cm**3').d))
+
 	# SAVE FIGURES
 	if draw_density_map == 1:
 		fig_density_map[time].savefig("Sigma_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_temperature_map == 1:
 		fig_temperature_map[time].savefig("Temp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+	if draw_cellsize_map == 1:
+		fig_cellsize_map[time].savefig("Cell_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_PDF == 1:
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_pos_vel_PDF >= 1:
@@ -462,6 +591,8 @@ for time in range(len(times)):
 			plt.setp(ltext, fontsize='small')
 			plt.savefig("pos_vel_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
+	if draw_rad_height_PDF >= 1:
+		fig_rad_height_PDF[time].savefig("rad_height_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_density_DF == 1:
 		plt.clf()
 		plt.subplot(111, aspect=1)
@@ -469,11 +600,12 @@ for time in range(len(times)):
 			lines = plt.plot(density_DF_xs[time][code], density_DF_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
 		plt.semilogx()
 		plt.semilogy()
-		plt.xlim(1e-29, 1e-21)
-		plt.ylim(1e5, 2e10)
+		plt.xlim(1e-29, 1e-21) 
+		plt.ylim(1e4, 1e9) # accumulation=False
+		# plt.ylim(1e5, 2e10) # accumulation=True
 		plt.xlabel("$\mathrm{Density\ (g/cm^3)}$")
 		plt.ylabel("$\mathrm{Mass\ (M_{\odot})}$")
-		plt.legend(codes, loc=4, frameon=True)
+		plt.legend(codes, loc=2, frameon=True)
 		leg = plt.gca().get_legend()
 		ltext = leg.get_texts()
 		plt.setp(ltext, fontsize='xx-small')
@@ -555,3 +687,37 @@ for time in range(len(times)):
 		plt.setp(ltext, fontsize='small')
 		plt.savefig("gas_surface_density_vertical_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
+	if draw_cut_through == 1:
+		plt.clf()
+		plt.subplot(111, aspect=0.5)
+		for code in range(len(codes)):
+			lines = plt.plot(cut_through_zs[time][code], cut_through_zvalues[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.semilogy()
+		plt.xlim(-1.4, 1.4)
+		plt.ylim(1e-26, 1e-22)
+		plt.xlabel("$\mathrm{Vertical\ Height\ (kpc)}$")
+		plt.ylabel("$\mathrm{Density\ (g/cm^3)}$")
+		plt.legend(codes, loc=1, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='x-small')
+		z = np.arange(-1.4, 1.4, 0.05)
+		plt.plot(z, rho_agora_disk(0, np.abs(z)), linestyle="--", linewidth=2, color='k', alpha=0.7)
+		plt.savefig("cut_through_z_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
+		plt.subplot(111, aspect=0.5)
+		for code in range(len(codes)):
+			lines = plt.plot(cut_through_xs[time][code], cut_through_xvalues[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.semilogy()
+		plt.xlim(-14, 14)
+		plt.ylim(1e-26, 1e-22)
+		plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+		plt.ylabel("$\mathrm{Density\ (g/cm^3)}$")
+		plt.legend(codes, loc=1, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='x-small')
+		x = np.arange(-14, 14, 0.05)
+		plt.plot(x, rho_agora_disk(np.abs(x), 0), linestyle="--", linewidth=2, color='k', alpha=0.7)
+		plt.savefig("cut_through_x_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+
