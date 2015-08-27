@@ -35,7 +35,7 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
  	     [file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5'],
  	     [file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335'],
   	     [file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500'],
-	     [file_location+'GIZMO/snap_000_temp_h', file_location+'GIZMO/snap_100_temp_h'],
+	     [file_location+'GIZMO/snapshot_temp_000', file_location+'GIZMO/snapshot_temp_100'],
  	     [file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00068/info_00068.txt']]
 # codes = ['ART-I']
 # filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d']]
@@ -52,7 +52,7 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 # codes = ['GEAR']
 # filenames = [[file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500']]
 # codes = ['GIZMO']
-# filenames = [[file_location+'GIZMO/snap_000_temp_h', file_location+'GIZMO/snap_100_temp_h']]
+# filenames = [[file_location+'GIZMO/snapshot_temp_000', file_location+'GIZMO/snapshot_temp_100']]
 # codes = ['RAMSES']
 # filenames = [[file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00068/info_00068.txt']] 
 gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
