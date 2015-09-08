@@ -29,7 +29,7 @@ codes = ['ART-I', 'ART-II', 'CHANGA', 'ENZO', 'GADGET-3', 'GASOLINE', 'GEAR', 'G
 file_location = '../../AGORA-DISK-repository-for-use/Grackle+noSF/'
 #file_location = '/global/project/projectdirs/agora/AGORA-DISK-repository-for-use/Grackle+noSF/'
 filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d'],
-	     [file_location+'ART-II/noSF_aggrRef/OUT/AGORA_LOW_000000.art', file_location+'ART-II/noSF_aggrRef/OUT/AGORA_LOW_000084.art'],
+	     [file_location+'ART-II/noSF_def/OUT/AGORA_LOW_000000.art', file_location+'ART-II/noSF_def/OUT/AGORA_LOW_000084.art'],
 	     [file_location+'CHANGA/disklow/disklow.000000', file_location+'CHANGA/disklow/disklow.000500'], 
 	     [file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0100/DD0100'],
  	     [file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar/snap_iso_dry_010.hdf5'],
@@ -40,7 +40,7 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 # codes = ['ART-I']
 # filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d']]
 # codes = ['ART-II']
-# filenames = [[file_location+'ART-II/noSF_aggrRef/OUT/AGORA_LOW_000000.art', file_location+'ART-II/noSF_aggrRef/OUT/AGORA_LOW_000084.art']]
+# filenames = [[file_location+'ART-II/noSF_def/OUT/AGORA_LOW_000000.art', file_location+'ART-II/noSF_def/OUT/AGORA_LOW_000084.art']]
 # codes = ['CHANGA']
 # filenames = [[file_location+'CHANGA/disklow/disklow.000000', file_location+'CHANGA/disklow/disklow.000500']]
 # codes = ['ENZO']
