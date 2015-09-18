@@ -32,7 +32,7 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 	     [file_location+'ART-II/noSF_def/OUT/AGORA_LOW_000000.art', file_location+'ART-II/noSF_def/OUT/AGORA_LOW_000087.art'],
 	     [file_location+'CHANGA/disklow/disklow.000000', file_location+'CHANGA/disklow/disklow.000500'], 
 	     [file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0100/DD0100'],
- 	     [file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar2/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar2/snap_iso_dry_010.hdf5'],
+ 	     [file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_010.hdf5'],
  	     [file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335'],
   	     [file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500'],
 	     [file_location+'GIZMO/snapshot_temp_000', file_location+'GIZMO/snapshot_temp_100'],
@@ -46,7 +46,7 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 # codes = ['ENZO']
 # filenames = [[file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0100/DD0100']]
 # codes = ['GADGET-3']
-# filenames = [[file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar2/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar2/snap_iso_dry_010.hdf5']]
+# filenames = [[file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_010.hdf5']]
 # codes = ['GASOLINE']
 # filenames = [[file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335']]
 # codes = ['GEAR']
