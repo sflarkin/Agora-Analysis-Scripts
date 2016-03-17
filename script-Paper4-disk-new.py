@@ -147,6 +147,8 @@ for time in range(len(times)):
 
 for time in range(len(times)):
 	for code in range(len(codes)):
+		if filenames[code] == []:
+			continue
 		# LOAD DATASETS
 		if codes[code] == 'ART-I': # ART frontend doesn't find the accompanying files, so we specify them; see http://yt-project.org/docs/dev/examining/loading_data.html#art-data
 			dirnames = filenames[code][time][:filenames[code][time].rfind('/')+1]
@@ -208,7 +210,7 @@ for time in range(len(times)):
 		pf.add_field(("index", "cell_volume_inv2"), function=_Inv2CellVolumeCode, units='code_length**(-6)', display_name="Inv2CellVolumeCode", take_log=True)	
 		
 		# ADDITIONAL FIELDS II: TEMPERATURE
-                if codes[code] == 'GEAR' or codes[code] == 'RAMSES': 
+                if codes[code] == 'GEAR' or codes[code] == 'GADGET-3' or codes[code] == 'RAMSES': 
 			# From grackle/src/python/utilities/convenience.py: Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
 			def calc_mu_table_local(temperature):
 				tt = np.array([1.0e+01, 1.0e+02, 1.0e+03, 1.0e+04, 1.3e+04, 2.1e+04, 3.4e+04, 6.3e+04, 1.0e+05, 1.0e+09])
@@ -232,7 +234,7 @@ for time in range(len(times)):
 				logT_over_mu = np.log(T_over_mu)
 				logT = np.interp(logT_over_mu, np.log(T_over_mu_values), np.log(temperature_values)) # linear interpolation in log-log space
 				return np.exp(logT)
-			if codes[code] == 'GEAR':
+			if codes[code] == 'GEAR' or codes[code] == 'GADGET-3':
 				def _Temperature_3(field, data):  
 					gamma = 5.0/3.0
 					T_over_mu = (data[PartType_Gas_to_use, "InternalEnergy"] * (gamma-1) * constants.mass_hydrogen_cgs / constants.boltzmann_constant_cgs).in_units('K').d # T/mu
