@@ -68,9 +68,6 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 # filenames = [[file_location+'GIZMO/snapshot_temp_000', file_location+'GIZMO/snapshot_temp_100']]
 # codes = ['RAMSES']
 # filenames = [[file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00236/info_00236.txt']] 
-# codes = ['ENZO', 'GADGET-3']
-# filenames = [[file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0050/DD0050'],
-#  	     [file_location+'GADGET-3/snap_iso_sf_000.hdf5', file_location+'GADGET-3/snap_iso_sf_010.hdf5']]
 gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 			    'UnitMass_in_g'            :   1.989e+43,
 			    'UnitVelocity_in_cm_per_s' :      100000}
@@ -81,8 +78,10 @@ draw_density_map       = 1         # 0/1   = OFF/ON
 draw_temperature_map   = 1         # 0/1   = OFF/ON
 draw_cellsize_map      = 1         # 0/1   = OFF/ON
 draw_metal_map         = 1         # 0/1   = OFF/ON
+draw_star_map          = 1         # 0/1   = OFF/ON
 draw_PDF               = 1         # 0/1   = OFF/ON
-draw_pos_vel_PDF       = 1         # 0/1/2 = OFF/ON/ON with 1D profile
+draw_pos_vel_PDF       = 2         # 0/1/2 = OFF/ON/ON with 1D profile
+draw_star_pos_vel_PDF  = 2         # 0/1/2 = OFF/ON/ON with 1D profile
 draw_rad_height_PDF    = 0         # 0/1/2 = OFF/ON/ON with analytic ftn subtracted
 draw_metal_PDF         = 1         # 0/1   = OFF/ON
 draw_density_DF        = 0         # 0/1   = OFF/ON
@@ -100,20 +99,26 @@ fig_density_map        = []
 fig_temperature_map    = []
 fig_cellsize_map       = []
 fig_metal_map          = [] 
+fig_star_map           = [] 
 fig_PDF                = []
 fig_pos_vel_PDF        = []
+fig_star_pos_vel_PDF   = []
 fig_rad_height_PDF     = []
 fig_metal_PDF          = []
 grid_density_map       = []
 grid_temperature_map   = []
 grid_cellsize_map      = []
 grid_metal_map         = []
+grid_star_map          = []
 grid_PDF               = []
 grid_pos_vel_PDF       = []
+grid_star_pos_vel_PDF  = []
 grid_rad_height_PDF    = []
 grid_metal_PDF         = []
 pos_vel_xs             = []
 pos_vel_profiles       = []
+star_pos_vel_xs        = []
+star_pos_vel_profiles  = []
 density_DF_xs          = []
 density_DF_profiles    = []
 radius_DF_xs           = []
@@ -142,6 +147,10 @@ for time in range(len(times)):
 		fig_metal_map        += [plt.figure(figsize=(100,20))]
 		grid_metal_map       += [AxesGrid(fig_metal_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
+	if draw_star_map == 1:
+		fig_star_map         += [plt.figure(figsize=(100,20))]
+		grid_star_map        += [AxesGrid(fig_star_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
 	if draw_PDF == 1:
 		fig_PDF              += [plt.figure(figsize=(50, 80))]
 		grid_PDF             += [AxesGrid(fig_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
@@ -152,6 +161,12 @@ for time in range(len(times)):
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
 		pos_vel_xs.append([])
 		pos_vel_profiles.append([])
+	if draw_star_pos_vel_PDF >= 1:
+		fig_star_pos_vel_PDF += [plt.figure(figsize=(50, 80))]
+		grid_star_pos_vel_PDF+= [AxesGrid(fig_star_pos_vel_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
+		star_pos_vel_xs.append([])
+		star_pos_vel_profiles.append([])
 	if draw_rad_height_PDF >= 1:
 		fig_rad_height_PDF   += [plt.figure(figsize=(50, 80))]
 		grid_rad_height_PDF  += [AxesGrid(fig_rad_height_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
@@ -263,19 +278,45 @@ for time in range(len(times)):
 		else:
 			pf = load(filenames[code][time])
 
-		# GAS PARTICLE FILEDS FOR SPH CODES
+		# PARTICLE FILED NAMES FOR SPH CODES, AND STELLAR PARTICLE FILTERS FOR AMR CODES
+		PartType_Gas_to_use = "Gas"     
+		PartType_Star_to_use = "Stars"
+		MassType_to_use = "Mass"
+		MetallicityType_to_use = "Metallicity"
+
 		if codes[code] == 'CHANGA' or codes[code] == 'GASOLINE':
-			PartType_Gas_to_use = "Gas"
-			MassType_to_use = "Mass"
 			MetallicityType_to_use = "Metals"
-		elif codes[code] == 'GIZMO' or codes[code] == 'GEAR':
-			PartType_Gas_to_use = "Gas"
-			MassType_to_use = "Mass"
-			MetallicityType_to_use = "Metallicity"
+			PartType_Star_to_use = "NewStars"
+			def NewStars(pfilter, data): 
+			 	return (data[(pfilter.filtered_type, "FormationTime")] > 0)
+			add_particle_filter(PartType_Star_to_use, function=NewStars, filtered_type="Stars", requires=["FormationTime"])
+			pf.add_particle_filter(PartType_Star_to_use)
+			pf.periodicity = (True, True, True) # this is needed especially when bPeriodic = 0 in GASOLINE, to avoid RuntimeError in geometry/selection_routines.pyx:855
+		elif codes[code] == 'ART-I': 
+			def Stars(pfilter, data): # see http://yt-project.org/docs/dev/analyzing/filtering.html#filtering-particle-fields
+			 	#return (data[(pfilter.filtered_type, "particle_creation_time")] > 0) # this doesn't work because all "stars"="specie1" have the same particle_creation_time?! 
+			 	return ((data[(pfilter.filtered_type, "particle_creation_time")] > 0) & (data[(pfilter.filtered_type, "particle_index")] >= 212500)) 
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="stars", requires=["particle_creation_time", "particle_index"])
+			pf.add_particle_filter(PartType_Star_to_use)
+		elif codes[code] == 'ART-II': 
+			def Stars(pfilter, data): 
+			 	return (data[(pfilter.filtered_type, "BIRTH_TIME")] > 0)
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="STAR", requires=["BIRTH_TIME"])
+			pf.add_particle_filter(PartType_Star_to_use)
+		elif codes[code] == 'ENZO': 
+			def Stars(pfilter, data): 
+			 	return ((data[(pfilter.filtered_type, "particle_type")] == 2) & (data[(pfilter.filtered_type, "creation_time")] > 0))
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="all", requires=["particle_type", "creation_time"])
+			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == "GADGET-3":
 			PartType_Gas_to_use = "PartType0"				
+			PartType_Star_to_use = "PartType4"				
 			MassType_to_use = "Masses"
-			MetallicityType_to_use = "Metallicity"
+		elif codes[code] == 'RAMSES': 
+			def Stars(pfilter, data): 
+			 	return (data[(pfilter.filtered_type, "particle_age")] > 0)
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="all", requires=["particle_age"])
+			pf.add_particle_filter(PartType_Star_to_use)
 
 		# AXIS SWAP FOR PLOT COLLECTION
 		pf.coordinates.x_axis[1] = 0
@@ -350,13 +391,12 @@ for time in range(len(times)):
 			def _metallicity_2(field, data):  
 				return data["gas", "metal_density"] / data["gas", "density"]
 			pf.add_field(("gas", "metallicity"), function=_metallicity_2, force_override=True, display_name="Metallicity", take_log=True, units="") 
-                elif codes[code] == 'GEAR': # "Metals" in GEAR is 10-species field (last one being the total metal fraction), so ("Metals", 10) needs to be added to _vector_fields in frontends/gadget/io.py 
+                elif codes[code] == 'GEAR': # "Metals" in GEAR is 10-species field ([:,9] is the total metal fraction), so requires a change in _vector_fields in frontends/gadget/io.py: add ("Metals", 10) 
  		 	def _metallicity_2(field, data):  
  		  		if len(data[PartType_Gas_to_use, "Metals"].shape) == 1:
  		  			return data[PartType_Gas_to_use, "Metals"]
  		  		else:
- 		  			gear_total_metal_fraction_index = data[PartType_Gas_to_use, "Metals"].shape[-1] - 1 # normally = 9
- 		  			return data[PartType_Gas_to_use, "Metals"][:,gear_total_metal_fraction_index].in_units("") # in_units("") turned out to be crucial!  
+ 		  			return data[PartType_Gas_to_use, "Metals"][:,9].in_units("") # in_units("") turned out to be crucial!; otherwise code_metallicity will be used and it will mess things up
 			# We are creating ("Gas", "Metallicity") here, different from ("Gas", "metallicity") which is auto-generated by yt but doesn't work properly
  		  	pf.add_field((PartType_Gas_to_use, MetallicityType_to_use), function=_metallicity_2, display_name="Metallicity", particle_type=True, take_log=True, units="")
  		  	# Also creating smoothed field following an example in yt-project.org/docs/dev/cookbook/calculating_information.html; use hardcoded num_neighbors as in frontend/gadget/fields.py
@@ -469,18 +509,42 @@ for time in range(len(times)):
 		# METAL MAPS
 		if draw_metal_map == 1: 
 			for ax in range(1, 3):  
-				p = ProjectionPlot(pf, ax, ("gas", "metallicity"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density_squared"), fontsize=9)
-				p.set_zlim(("gas", "metallicity"), 0.005, 0.05)			
-				plot = p.plots[("gas", "metallicity")]
+				p26 = ProjectionPlot(pf, ax, ("gas", "metallicity"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density_squared"), fontsize=9)
+				p26.set_zlim(("gas", "metallicity"), 0.005, 0.05)			
+				plot26 = p26.plots[("gas", "metallicity")]
 
-				plot.figure = fig_metal_map[time]
-				plot.axes = grid_metal_map[time][(ax-1)*len(codes)+code].axes
-				if code == 0: plot.cax = grid_metal_map[time].cbar_axes[0]
-				p._setup_plots()
+				plot26.figure = fig_metal_map[time]
+				plot26.axes = grid_metal_map[time][(ax-1)*len(codes)+code].axes
+				if code == 0: plot26.cax = grid_metal_map[time].cbar_axes[0]
+				p26._setup_plots()
 
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
 				grid_metal_map[time][code].axes.add_artist(at)
+
+		# STELLAR MAPS
+		if draw_star_map == 1 and time != 0: 
+			for ax in range(1, 3):  
+				p27 = ParticleProjectionPlot(pf, ax, (PartType_Star_to_use, "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
+				p27.set_unit((PartType_Star_to_use, "particle_mass"), 'Msun')
+				p27.set_zlim((PartType_Star_to_use, "particle_mass"), 1e3, 1e7)
+				p27.set_buff_size(400) # default is 800
+				p27.set_colorbar_label((PartType_Star_to_use, "particle_mass"), "Stellar Mass Per Pixel ($\mathrm{M}_{\odot}$)")
+				plot27 = p27.plots[(PartType_Star_to_use, "particle_mass")]
+				# p27 = ParticleProjectionPlot(pf, ax, (PartType_Star_to_use, "particle_velocity_cylindrical_theta"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = (PartType_Star_to_use, "particle_mass"), fontsize=9)
+				# p27.set_unit((PartType_Star_to_use, "particle_velocity_cylindrical_theta"), 'km/s')
+				# p27.set_buff_size(400) 
+				# p27.set_colorbar_label((PartType_Star_to_use, "particle_velocity_cylindrical_theta"), "Rotational Velocity (km/s)")
+				# plot27 = p27.plots[(PartType_Star_to_use, "particle_velocity_cylindrical_theta")]
+
+				plot27.figure = fig_star_map[time]
+				plot27.axes = grid_star_map[time][(ax-1)*len(codes)+code].axes
+				if code == 0: plot27.cax = grid_star_map[time].cbar_axes[0]
+				p27._setup_plots()
+
+			if add_nametag == 1:
+				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
+				grid_star_map[time][code].axes.add_artist(at)
 
 		# DENSITY-TEMPERATURE PDF
 		if draw_PDF == 1:
@@ -509,7 +573,7 @@ for time in range(len(times)):
 				at = AnchoredText("%s" % codes[code], loc=3, prop=dict(size=10), frameon=True)
 				grid_PDF[time][code].axes.add_artist(at)
 
-		# POSITION-VELOCITY PDF
+		# POSITION-VELOCITY PDF FOR GAS
 		if draw_pos_vel_PDF >= 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
 			sp.set_field_parameter("normal", disk_normal_vector) 
@@ -575,6 +639,52 @@ for time in range(len(times)):
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=4, prop=dict(size=10), frameon=True)
 				grid_pos_vel_PDF[time][code].axes.add_artist(at)
+
+		# POSITION-VELOCITY PDF FOR NEW STARS
+		if draw_star_pos_vel_PDF >= 1 and time != 0:
+			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
+			sp.set_field_parameter("normal", disk_normal_vector) 
+			pf.field_info[(PartType_Star_to_use, "particle_position_cylindrical_radius")].take_log = False
+			pf.field_info[(PartType_Star_to_use, "particle_velocity_cylindrical_theta")].take_log = False
+			pf.field_info[(PartType_Star_to_use, "particle_mass")].output_units = 'code_mass' # this turned out to be crucial!; otherwise wrong output_unit 'g' is assumed in ParticlePhasePlot->create_profile in visualizaiton/particle_plots.py for ART-I/ENZO/RAMSES
+			p41 = ParticlePhasePlot(sp, (PartType_Star_to_use, "particle_position_cylindrical_radius"), (PartType_Star_to_use, "particle_velocity_cylindrical_theta"), \
+						       (PartType_Star_to_use, "particle_mass"), weight_field=None, fontsize=12, x_bins=300, y_bins=300)
+			p41.set_unit("particle_position_cylindrical_radius", 'kpc')
+			p41.set_unit("particle_velocity_cylindrical_theta", 'km/s')
+			p41.set_unit("particle_mass", 'Msun') # requires a change in set_unit in visualization/profile_plotter.py: remove self.plots[field].zmin, self.plots[field].zmax = (None, None) 
+#			p41.set_unit((PartType_Star_to_use, "particle_mass"), 'Msun') # Neither this nor above works without such change
+			p41.set_zlim((PartType_Star_to_use, "particle_mass"), 1e3, 1e7)
+
+			p41.set_colorbar_label((PartType_Star_to_use, "particle_mass"), "Newly Formed Stellar Mass ($\mathrm{M}_{\odot}$)")
+			plot41 = p41.plots[(PartType_Star_to_use, "particle_mass")]
+
+			p41.set_xlabel("Cylindrical Radius (kpc)")
+			p41.set_ylabel("Rotational Velocity (km/s)")
+ 			p41.set_xlim(0, 14)
+			p41.set_ylim(-100, 350)
+
+			plot41.figure = fig_star_pos_vel_PDF[time]
+			plot41.axes = grid_star_pos_vel_PDF[time][code].axes
+			if code == 0: plot41.cax = grid_star_pos_vel_PDF[time].cbar_axes[0]
+			p41._setup_plots()
+
+			# Add 1D profile line if requested
+			if draw_star_pos_vel_PDF == 2 and time != 0:
+				p51 = ProfilePlot(sp, (PartType_Star_to_use, "particle_position_cylindrical_radius"), (PartType_Star_to_use, "particle_velocity_cylindrical_theta"), \
+							 weight_field=(PartType_Star_to_use, "particle_mass"), n_bins=50, x_log=False)
+				p51.set_log((PartType_Star_to_use, "particle_velocity_cylindrical_theta"), False)
+				p51.set_log((PartType_Star_to_use, "particle_position_cylindrical_radius"), False)
+				p51.set_unit("particle_position_cylindrical_radius", 'kpc')
+				p51.set_xlim(1e-3, 14)
+				p51.set_ylim("particle_velocity_cylindrical_theta", -100, 350)
+				line = ln.Line2D(p51.profiles[0].x.in_units('kpc'), p51.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s'), linestyle="-", linewidth=2, color='k', alpha=0.7)
+				star_pos_vel_xs[time].append(p51.profiles[0].x.in_units('kpc').d)
+				star_pos_vel_profiles[time].append(p51.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s').d)
+				grid_star_pos_vel_PDF[time][code].axes.add_line(line) 
+
+			if add_nametag == 1:
+				at = AnchoredText("%s" % codes[code], loc=4, prop=dict(size=10), frameon=True)
+				grid_star_pos_vel_PDF[time][code].axes.add_artist(at)
 
 		# RADIUS-HEIGHT PDF
 		if draw_rad_height_PDF >= 1:
@@ -740,7 +850,9 @@ for time in range(len(times)):
 	if draw_cellsize_map == 1:
 		fig_cellsize_map[time].savefig("Cell_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_metal_map == 1:
-		fig_metal_map[time].savefig("Metal2_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		fig_metal_map[time].savefig("Metal_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+	if draw_star_map == 1 and time != 0:
+		fig_star_map[time].savefig("Star_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_PDF == 1:
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_pos_vel_PDF >= 1:
@@ -759,6 +871,23 @@ for time in range(len(times)):
 			ltext = leg.get_texts()
 			plt.setp(ltext, fontsize='small')
 			plt.savefig("pos_vel_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+			plt.clf()
+	if draw_star_pos_vel_PDF >= 1 and time != 0:
+		fig_star_pos_vel_PDF[time].savefig("star_pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		if draw_star_pos_vel_PDF == 2 and time != 0:
+			plt.clf()
+			plt.subplot(111, aspect=0.02)
+			for code in range(len(codes)):
+				lines = plt.plot(star_pos_vel_xs[time][code], star_pos_vel_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+			plt.xlim(0, 14)
+			plt.ylim(-100, 350)
+			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+			plt.ylabel("$\mathrm{Rotational\ Velocity\ (km/s)}$")
+			plt.legend(codes, loc=4, frameon=True)
+			leg = plt.gca().get_legend()
+			ltext = leg.get_texts()
+			plt.setp(ltext, fontsize='small')
+			plt.savefig("star_pos_vel_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
 	if draw_rad_height_PDF >= 1:
 		fig_rad_height_PDF[time].savefig("rad_height_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
