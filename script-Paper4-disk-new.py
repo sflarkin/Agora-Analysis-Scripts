@@ -83,9 +83,10 @@ draw_PDF               = 1         # 0/1   = OFF/ON
 draw_pos_vel_PDF       = 2         # 0/1/2 = OFF/ON/ON with 1D profile
 draw_star_pos_vel_PDF  = 2         # 0/1/2 = OFF/ON/ON with 1D profile
 draw_rad_height_PDF    = 0         # 0/1/2 = OFF/ON/ON with analytic ftn subtracted
-draw_metal_PDF         = 1         # 0/1   = OFF/ON
+draw_metal_PDF         = 0         # 0/1   = OFF/ON
 draw_density_DF        = 0         # 0/1   = OFF/ON
 draw_radius_DF         = 0         # 0/1   = OFF/ON
+draw_star_radius_DF    = 0         # 0/1   = OFF/ON
 draw_height_DF         = 0         # 0/1   = OFF/ON
 draw_cut_through       = 0         # 0/1   = OFF/ON
 add_nametag            = 1         # 0/1   = OFF/ON
@@ -123,6 +124,8 @@ density_DF_xs          = []
 density_DF_profiles    = []
 radius_DF_xs           = []
 radius_DF_profiles     = []
+star_radius_DF_xs      = []
+star_radius_DF_profiles= []
 height_DF_xs           = []
 height_DF_profiles     = []
 cut_through_zs         = []
@@ -181,6 +184,9 @@ for time in range(len(times)):
 	if draw_radius_DF == 1:
 		radius_DF_xs.append([])
 		radius_DF_profiles.append([])
+	if draw_star_radius_DF == 1:
+		star_radius_DF_xs.append([])
+		star_radius_DF_profiles.append([])
 	if draw_height_DF == 1:
 		height_DF_xs.append([])
 		height_DF_profiles.append([])
@@ -805,6 +811,19 @@ for time in range(len(times)):
 				radius_DF_xs[time].append(p7.profiles[0].x.in_units('kpc').d)
 				radius_DF_profiles[time].append(p7.profiles[0]["Mass_2"].in_units('Msun').d)
 
+		# CYLINDRICAL RADIUS DF + RADIALLY-BINNED SURFACE DENSITY FOR NEW STARS
+		if draw_star_radius_DF == 1 and time != 0:
+			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
+			sp.set_field_parameter("normal", disk_normal_vector) 
+			pf.field_info[(PartType_Star_to_use, "particle_mass")].take_log = True
+			pf.field_info[(PartType_Star_to_use, "particle_mass")].output_units = 'code_mass' # this turned out to be crucial!; check output_units above
+			pf.field_info[(PartType_Star_to_use, "particle_position_cylindrical_radius")].take_log = False
+			p71 = ProfilePlot(sp, (PartType_Star_to_use, "particle_position_cylindrical_radius"),  (PartType_Star_to_use, "particle_mass"), weight_field=None, n_bins=50, x_log=False, accumulation=False)
+			p71.set_unit("particle_position_cylindrical_radius", 'kpc')
+			p71.set_xlim(1e-3, 15) 
+			star_radius_DF_xs[time].append(p71.profiles[0].x.in_units('kpc').d)
+			star_radius_DF_profiles[time].append(p71.profiles[0]["particle_mass"].in_units('Msun').d)
+
 		# VERTICAL HEIGHT DF + VERTICALLY-BINNED GAS SURFACE DENSITY 
 		if draw_height_DF == 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
@@ -948,6 +967,44 @@ for time in range(len(times)):
 		ltext = leg.get_texts()
 		plt.setp(ltext, fontsize='small')
 		plt.savefig("gas_surface_density_radial_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
+	if draw_star_radius_DF == 1 and time != 0:
+		plt.clf()
+		plt.subplot(111, aspect=1)
+		for code in range(len(codes)):
+			lines = plt.plot(star_radius_DF_xs[time][code], np.add.accumulate(star_radius_DF_profiles[time][code]), color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.semilogy()
+		plt.xlim(0, 14)
+		plt.ylim(1e7, 2e10)
+		plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+		plt.ylabel("$\mathrm{Newly Formed Stellar Mass\ (M_{\odot})}$")
+		plt.legend(codes, loc=4, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='small')
+		plt.savefig("star_radius_DF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+
+		plt.clf()
+		plt.subplot(111, aspect=1)
+		for code in range(len(codes)):
+			surface_density = []
+			for radius in range(len(star_radius_DF_profiles[time][code])):
+				if radius == 0:
+					surface_area = 4*np.pi*(star_radius_DF_xs[time][code][radius]*1e3)**2 # in pc^2
+				else:
+					surface_area = 4*np.pi*((star_radius_DF_xs[time][code][radius]*1e3)**2 - (star_radius_DF_xs[time][code][radius-1]*1e3)**2)
+				surface_density.append(star_radius_DF_profiles[time][code][radius] / surface_area)
+			lines = plt.plot(star_radius_DF_xs[time][code], surface_density, color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.semilogy()
+		plt.xlim(0, 14)
+		plt.ylim(1e-1, 5e3)
+		plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+		plt.ylabel("$\mathrm{Newly Formed Stellar Surface\ Density\ (M_{\odot}/pc^2)}$")
+		plt.legend(codes, loc=1, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='small')
+		plt.savefig("star_surface_density_radial_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
 	if draw_height_DF == 1:
 		plt.clf()
