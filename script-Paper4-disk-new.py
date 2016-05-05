@@ -23,6 +23,8 @@ from mpl_toolkits.axes_grid1 import AxesGrid
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredText
 from yt.fields.particle_fields import add_volume_weighted_smoothed_field
 from yt.fields.particle_fields import add_nearest_neighbor_field
+from yt.analysis_modules.star_analysis.api import StarFormationRate
+from yt.data_objects.particle_filters import add_particle_filter
 mylog.setLevel(1)
 
 #file_location = '../../AGORA-DISK-repository-for-use/Grackle+noSF/'
@@ -81,13 +83,14 @@ draw_metal_map         = 1         # 0/1   = OFF/ON
 draw_star_map          = 1         # 0/1   = OFF/ON
 draw_PDF               = 1         # 0/1   = OFF/ON
 draw_pos_vel_PDF       = 2         # 0/1/2 = OFF/ON/ON with 1D profile
-draw_star_pos_vel_PDF  = 2         # 0/1/2 = OFF/ON/ON with 1D profile
+draw_star_pos_vel_PDF  = 0         # 0/1/2 = OFF/ON/ON with 1D profile
 draw_rad_height_PDF    = 0         # 0/1/2 = OFF/ON/ON with analytic ftn subtracted
 draw_metal_PDF         = 0         # 0/1   = OFF/ON
 draw_density_DF        = 0         # 0/1   = OFF/ON
 draw_radius_DF         = 0         # 0/1   = OFF/ON
 draw_star_radius_DF    = 0         # 0/1   = OFF/ON
 draw_height_DF         = 0         # 0/1   = OFF/ON
+draw_SFR               = 0
 draw_cut_through       = 0         # 0/1   = OFF/ON
 add_nametag            = 1         # 0/1   = OFF/ON
 times                  = [0, 500]  # in Myr
@@ -128,6 +131,9 @@ star_radius_DF_xs      = []
 star_radius_DF_profiles= []
 height_DF_xs           = []
 height_DF_profiles     = []
+sfr_ts                 = []
+sfr_cum_masses         = []
+sfr_sfrs               = []
 cut_through_zs         = []
 cut_through_zvalues    = []
 cut_through_xs         = []
@@ -190,6 +196,10 @@ for time in range(len(times)):
 	if draw_height_DF == 1:
 		height_DF_xs.append([])
 		height_DF_profiles.append([])
+	if draw_SFR == 1:
+		sfr_ts.append([])
+		sfr_cum_masses.append([])
+		sfr_sfrs.append([])
 	if draw_cut_through == 1:
 		cut_through_zs.append([])
 		cut_through_zvalues.append([])
@@ -284,46 +294,59 @@ for time in range(len(times)):
 		else:
 			pf = load(filenames[code][time])
 
-		# PARTICLE FILED NAMES FOR SPH CODES, AND STELLAR PARTICLE FILTERS FOR AMR CODES
+		# PARTICLE FILED NAMES FOR SPH CODES, AND STELLAR PARTICLE FILTERS
 		PartType_Gas_to_use = "Gas"     
 		PartType_Star_to_use = "Stars"
 		MassType_to_use = "Mass"
 		MetallicityType_to_use = "Metallicity"
+		FormationTimeType_to_use = "StellarFormationTime" # for GADGET/GEAR/GIZMO, this field has to be added in frontends/sph/fields.py, in which only "FormationTime" can be recognized
 
 		if codes[code] == 'CHANGA' or codes[code] == 'GASOLINE':
 			MetallicityType_to_use = "Metals"
 			PartType_Star_to_use = "NewStars"
-			def NewStars(pfilter, data): 
-			 	return (data[(pfilter.filtered_type, "FormationTime")] > 0)
-			add_particle_filter(PartType_Star_to_use, function=NewStars, filtered_type="Stars", requires=["FormationTime"])
+			FormationTimeType_to_use = "FormationTime"
+			def NewStars(pfilter, data): # see http://yt-project.org/docs/dev/analyzing/filtering.html#filtering-particle-fields
+			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0)
+			add_particle_filter(PartType_Star_to_use, function=NewStars, filtered_type="Stars", requires=[FormationTimeType_to_use])
 			pf.add_particle_filter(PartType_Star_to_use)
 			pf.periodicity = (True, True, True) # this is needed especially when bPeriodic = 0 in GASOLINE, to avoid RuntimeError in geometry/selection_routines.pyx:855
 		elif codes[code] == 'ART-I': 
-			def Stars(pfilter, data): # see http://yt-project.org/docs/dev/analyzing/filtering.html#filtering-particle-fields
-			 	#return (data[(pfilter.filtered_type, "particle_creation_time")] > 0) # this doesn't work because all "stars"="specie1" have the same particle_creation_time?! 
-			 	return ((data[(pfilter.filtered_type, "particle_creation_time")] > 0) & (data[(pfilter.filtered_type, "particle_index")] >= 212500)) 
-			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="stars", requires=["particle_creation_time", "particle_index"])
+			FormationTimeType_to_use = "particle_creation_time"
+			def Stars(pfilter, data): 
+			 	#return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) # this doesn't work because all "stars"="specie1" have the same particle_creation_time of 6.851 Gyr
+			 	return ((data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) & (data[(pfilter.filtered_type, "particle_index")] >= 212500)) 
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="stars", requires=[FormationTimeType_to_use, "particle_index"])
 			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == 'ART-II': 
+			if time != 0: # BIRTH_TIME field exists in ART-II but as a dimensionless quantity for some reason in frontends/artio/fields.py; so we create StellarFormationTime field
+				def _FormationTime(field, data): 
+					return pf.arr(data["STAR", "BIRTH_TIME"].d, 'code_time')
+				pf.add_field(("STAR", FormationTimeType_to_use), function=_FormationTime, particle_type=True, take_log=False, units="code_time") 
 			def Stars(pfilter, data): 
-			 	return (data[(pfilter.filtered_type, "BIRTH_TIME")] > 0)
-			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="STAR", requires=["BIRTH_TIME"])
+			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0)
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="STAR", requires=[FormationTimeType_to_use])
 			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == 'ENZO': 
+			FormationTimeType_to_use = "creation_time"
 			def Stars(pfilter, data): 
-			 	return ((data[(pfilter.filtered_type, "particle_type")] == 2) & (data[(pfilter.filtered_type, "creation_time")] > 0))
-			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="all", requires=["particle_type", "creation_time"])
+			 	return ((data[(pfilter.filtered_type, "particle_type")] == 2) & (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0))
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="all", requires=["particle_type", FormationTimeType_to_use])
 			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == "GADGET-3":
 			PartType_Gas_to_use = "PartType0"				
 			PartType_Star_to_use = "PartType4"				
 			MassType_to_use = "Masses"
 		elif codes[code] == 'RAMSES': 
+			if time != 0: # Only particle_age field exists in RAMSES (only for new stars + IC stars), so we create StellarFormationTime field
+				pf.current_time = pf.arr(pf.parameters['time'], 'code_time') # we reset pf.current_time because it is incorrectly set up with a wrong unit in frontends/ramses/data_structure.py 
+				def _FormationTime(field, data): 
+					return pf.current_time - data["all", "particle_age"].in_units("s") 
+				pf.add_field(("all", FormationTimeType_to_use), function=_FormationTime, particle_type=True, take_log=False, units="code_time") 
 			def Stars(pfilter, data): 
 			 	return (data[(pfilter.filtered_type, "particle_age")] > 0)
 			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="all", requires=["particle_age"])
 			pf.add_particle_filter(PartType_Star_to_use)
-
+				
 		# AXIS SWAP FOR PLOT COLLECTION
 		pf.coordinates.x_axis[1] = 0
 		pf.coordinates.y_axis[1] = 2
@@ -389,15 +412,15 @@ for time in range(len(times)):
 				pf.add_field(("gas", "temperature"), function=_temperature_3, force_override=True, units="K")
 
 		# ADDITIONAL FIELDS III: METALLICITY (IN MASS FRACTION, NOT IN ZSUN)
-                if codes[code] == 'ART-I' or codes[code] == 'ART-II': # metallicity field in ART-I has a different meaning (see yt/frontends/art/fields.py), and metallicity field in ART-II is missing
+                if codes[code] == 'ART-I' or codes[code] == 'ART-II': # metallicity field in ART-I has a different meaning (see frontends/art/fields.py), and metallicity field in ART-II is missing
 			def _metallicity_2(field, data):  
 				return data["gas", "metal_ii_density"] / data["gas", "density"]
 			pf.add_field(("gas", "metallicity"), function=_metallicity_2, force_override=True, display_name="Metallicity", take_log=True, units="") 
-                elif codes[code] == 'ENZO': # metallicity field in ENZO is in Zsun
+                elif codes[code] == 'ENZO': # metallicity field in ENZO is in Zsun, so we create a new field
 			def _metallicity_2(field, data):  
 				return data["gas", "metal_density"] / data["gas", "density"]
 			pf.add_field(("gas", "metallicity"), function=_metallicity_2, force_override=True, display_name="Metallicity", take_log=True, units="") 
-                elif codes[code] == 'GEAR': # "Metals" in GEAR is 10-species field ([:,9] is the total metal fraction), so requires a change in _vector_fields in frontends/gadget/io.py: add ("Metals", 10) 
+                elif codes[code] == 'GEAR': # "Metals" in GEAR is 10-species field ([:,9] is the total metal fraction), so requires a change in _vector_fields in frontends/gadget/io.py: added ("Metals", 10) 
  		 	def _metallicity_2(field, data):  
  		  		if len(data[PartType_Gas_to_use, "Metals"].shape) == 1:
  		  			return data[PartType_Gas_to_use, "Metals"]
@@ -405,7 +428,7 @@ for time in range(len(times)):
  		  			return data[PartType_Gas_to_use, "Metals"][:,9].in_units("") # in_units("") turned out to be crucial!; otherwise code_metallicity will be used and it will mess things up
 			# We are creating ("Gas", "Metallicity") here, different from ("Gas", "metallicity") which is auto-generated by yt but doesn't work properly
  		  	pf.add_field((PartType_Gas_to_use, MetallicityType_to_use), function=_metallicity_2, display_name="Metallicity", particle_type=True, take_log=True, units="")
- 		  	# Also creating smoothed field following an example in yt-project.org/docs/dev/cookbook/calculating_information.html; use hardcoded num_neighbors as in frontend/gadget/fields.py
+ 		  	# Also creating smoothed field following an example in yt-project.org/docs/dev/cookbook/calculating_information.html; use hardcoded num_neighbors as in frontends/gadget/fields.py
  		  	fn = add_volume_weighted_smoothed_field(PartType_Gas_to_use, "Coordinates", MassType_to_use, "SmoothingLength", "Density", MetallicityType_to_use, pf.field_info, nneighbors=64)
  		  	# Alias doesn't work -- e.g. pf.field_info.alias(("gas", "metallicity"), fn[0]) -- probably because pf=GadgetDataset(), not load(); so I add and replace existing ("gas", "metallicity")
 			def _metallicity_3(field, data):  
@@ -844,6 +867,21 @@ for time in range(len(times)):
 				p8.set_xlim(1e-3, 1.4)
 				height_DF_xs[time].append(p8.profiles[0].x.in_units('kpc').d)
 				height_DF_profiles[time].append(p8.profiles[0]["Mass_2"].in_units('Msun').d)
+		
+		# STAR FORMATION RATE + CUMULATIVE STELLAR MASS GROWTH IN TIME
+		if draw_SFR == 1 and time != 0:
+			from yt.units.dimensions import length # Below are tricks to make StarFormationRate() work, particularly with "volume" argument, as it currently works only with comoving datasets
+			pf.unit_registry.add('pccm', pf.unit_registry.lut['pc'][0], length, "\\rm{pc}/(1+z)") 
+			pf.hubble_constant = 0.71; pf.omega_lambda = 0.73; pf.omega_matter = 0.27; pf.omega_curvature = 0.0
+
+			draw_SFR_mass = sp[(PartType_Star_to_use, "particle_mass")].in_units('Msun')
+			draw_SFR_ct   = sp[(PartType_Star_to_use, FormationTimeType_to_use)].in_units('Myr')
+			sfr = StarFormationRate(pf, star_mass = draw_SFR_mass, star_creation_time = draw_SFR_ct, 
+						volume = sp.volume(), bins = 50) # see: http://yt-project.org/docs/dev/analyzing/analysis_modules/star_analysis.html
+
+			sfr_ts[time].append(sfr.time.in_units('Myr')) # in Myr
+			sfr_cum_masses[time].append(sfr.Msol_cumulative) # in Msun
+			sfr_sfrs[time].append(sfr.Msol_yr) # in Msun/yr
 
 		# DENSITY ALONG THE ORTHO-RAY OBJECT CUTTING THROUGH THE CENTER
 		if draw_cut_through == 1:
@@ -864,18 +902,25 @@ for time in range(len(times)):
 	# SAVE FIGURES
 	if draw_density_map == 1:
 		fig_density_map[time].savefig("Sigma_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_temperature_map == 1:
 		fig_temperature_map[time].savefig("Temp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_cellsize_map == 1:
 		fig_cellsize_map[time].savefig("Cell_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_metal_map == 1:
 		fig_metal_map[time].savefig("Metal_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_star_map == 1 and time != 0:
 		fig_star_map[time].savefig("Star_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_PDF == 1:
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_pos_vel_PDF >= 1:
 		fig_pos_vel_PDF[time].savefig("pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 		if draw_pos_vel_PDF == 2 and time != 0:
 			plt.clf()
 			plt.subplot(111, aspect=0.02)
@@ -893,6 +938,7 @@ for time in range(len(times)):
 			plt.clf()
 	if draw_star_pos_vel_PDF >= 1 and time != 0:
 		fig_star_pos_vel_PDF[time].savefig("star_pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 		if draw_star_pos_vel_PDF == 2 and time != 0:
 			plt.clf()
 			plt.subplot(111, aspect=0.02)
@@ -910,8 +956,10 @@ for time in range(len(times)):
 			plt.clf()
 	if draw_rad_height_PDF >= 1:
 		fig_rad_height_PDF[time].savefig("rad_height_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_metal_PDF == 1:
 		fig_metal_PDF[time].savefig("metal_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_density_DF == 1:
 		plt.clf()
 		plt.subplot(111, aspect=1)
@@ -921,7 +969,7 @@ for time in range(len(times)):
 		plt.semilogy()
 		plt.xlim(1e-29, 1e-21) 
 		plt.ylim(1e4, 1e9) # accumulation=False
-		# plt.ylim(1e5, 2e10) # accumulation=True
+		#plt.ylim(1e5, 2e10) # accumulation=True
 		plt.xlabel("$\mathrm{Density\ (g/cm^3)}$")
 		plt.ylabel("$\mathrm{Mass\ (M_{\odot})}$")
 		plt.legend(codes, loc=2, frameon=True)
@@ -1044,6 +1092,34 @@ for time in range(len(times)):
 		plt.setp(ltext, fontsize='small')
 		plt.savefig("gas_surface_density_vertical_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
+	if draw_SFR == 1 and time != 0:
+		plt.clf()
+		plt.subplot(111)#, aspect=1e-7)
+		for code in range(len(codes)):
+			lines = plt.plot(sfr_ts[time][code], sfr_cum_masses[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.xlim(0, times[time])
+		plt.ylim(0, 5e9)
+		plt.xlabel("$\mathrm{Time\ (Myr)}$")
+		plt.ylabel("$\mathrm{Stellar\ Mass\ (M_{\odot})}$")
+		plt.legend(codes, loc=2, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='small')
+		plt.savefig("Stellar_mass_evolution_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
+		plt.subplot(111, aspect=28)
+		for code in range(len(codes)):
+			lines = plt.plot(sfr_ts[time][code], sfr_sfrs[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+		plt.xlim(0, times[time])
+		plt.ylim(0, 14)
+		plt.xlabel("$\mathrm{Time\ (Myr)}$")
+		plt.ylabel("$\mathrm{Star\ Formation\ Rate\ (M_{\odot}/yr)}$")
+		plt.legend(codes, loc=2, frameon=True)
+		leg = plt.gca().get_legend()
+		ltext = leg.get_texts()
+		plt.setp(ltext, fontsize='small')
+		plt.savefig("SFR_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_cut_through == 1:
 		plt.clf()
 		plt.subplot(111, aspect=0.5)
@@ -1077,4 +1153,4 @@ for time in range(len(times)):
 		x = np.arange(-14, 14, 0.05)
 		plt.plot(x, rho_agora_disk(np.abs(x), 0), linestyle="--", linewidth=2, color='k', alpha=0.7)
 		plt.savefig("cut_through_x_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-
+		plt.clf()
