@@ -38,7 +38,7 @@ codes = ['ART-I', 'ART-II', 'CHANGA', 'ENZO', 'GADGET-3', 'GASOLINE', 'GEAR', 'G
 # 	     [file_location+'CHANGA/disklow/disklow.000000', file_location+'CHANGA/disklow/disklow.000500'],
 # 	     [file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0100/DD0100'],
 # 	     [file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_010.hdf5'],
-# 	     [file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft.00335'],
+# 	     [file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_dataset1.00335'],
 # 	     [file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500'],
 # 	     [file_location+'GIZMO/snapshot_temp_000', file_location+'GIZMO/snapshot_temp_100'],
 # 	     [file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00068/info_00068.txt']]
@@ -337,11 +337,12 @@ for time in range(len(times)):
 			PartType_Star_to_use = "PartType4"				
 			MassType_to_use = "Masses"
 		elif codes[code] == 'RAMSES': 
-			if time != 0: # Only particle_age field exists in RAMSES (only for new stars + IC stars), so we create StellarFormationTime field
-				pf.current_time = pf.arr(pf.parameters['time'], 'code_time') # we reset pf.current_time because it is incorrectly set up with a wrong unit in frontends/ramses/data_structure.py 
-				def _FormationTime(field, data): 
-					return pf.current_time - data["all", "particle_age"].in_units("s") 
-				pf.add_field(("all", FormationTimeType_to_use), function=_FormationTime, particle_type=True, take_log=False, units="code_time") 
+			pf.current_time = pf.arr(pf.parameters['time'], 'code_time') # reset pf.current_time because it is incorrectly set up in frontends/ramses/data_structure.py, and I don't wish to mess with units there
+			FormationTimeType_to_use = "particle_age"
+			# if time != 0: # Only particle_age field exists in RAMSES (only for new stars + IC stars), so we create StellarFormationTime field
+			# 	def _FormationTime(field, data): 
+			# 		return pf.current_time - data["all", "particle_age"].in_units("s") 
+			# 	pf.add_field(("all", FormationTimeType_to_use), function=_FormationTime, particle_type=True, take_log=False, units="code_time") 
 			def Stars(pfilter, data): 
 			 	return (data[(pfilter.filtered_type, "particle_age")] > 0)
 			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="all", requires=["particle_age"])
@@ -396,7 +397,7 @@ for time in range(len(times)):
 					return YTArray(convert_T_over_mu_to_T(T_over_mu), 'K') # now T
 				pf.add_field((PartType_Gas_to_use, "Temperature"), function=_Temperature_3, particle_type=True, force_override=True, units="K")
 			elif codes[code] == 'RAMSES':
-				# The pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting yt/frontends/ramses/fields.py)
+				# The pressure field includes the artificial pressure support term, so one needs to be careful (compare with the exsiting frontends/ramses/fields.py)
 				def _temperature_3(field, data):  
 					T_J = 1800.0  # in K
 					n_J = 8.0     # in H/cc
