@@ -338,7 +338,7 @@ for time in range(len(times)):
 			MassType_to_use = "Masses"
 		elif codes[code] == 'RAMSES': 
 			pf.current_time = pf.arr(pf.parameters['time'], 'code_time') # reset pf.current_time because it is incorrectly set up in frontends/ramses/data_structure.py, and I don't wish to mess with units there
-			FormationTimeType_to_use = "particle_age"
+			FormationTimeType_to_use = "particle_age" # particle_age field actually means particle creation time, at least for this particular dataset, so the new field below is not needed			
 			# if time != 0: # Only particle_age field exists in RAMSES (only for new stars + IC stars), so we create StellarFormationTime field
 			# 	def _FormationTime(field, data): 
 			# 		return pf.current_time - data["all", "particle_age"].in_units("s") 
