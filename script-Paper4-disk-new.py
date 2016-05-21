@@ -313,8 +313,8 @@ for time in range(len(times)):
 		elif codes[code] == 'ART-I': 
 			FormationTimeType_to_use = "particle_creation_time"
 			def Stars(pfilter, data): 
-			 	#return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) # this doesn't work because all "stars"="specie1" have the same particle_creation_time of 6.851 Gyr
-			 	return ((data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) & (data[(pfilter.filtered_type, "particle_index")] >= 212500)) 
+			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) # for this to work, you need a fix in frontends/art/io.py
+#			 	return ((data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) & (data[(pfilter.filtered_type, "particle_index")] >= 212500)) # without the fix metioned above, the line won't work because all "stars"="specie1" have the same wrong particle_creation_time of 6.851 Gyr; so you will have to use this quick and dirty patch
 			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="stars", requires=[FormationTimeType_to_use, "particle_index"])
 			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == 'ART-II': 
@@ -338,7 +338,7 @@ for time in range(len(times)):
 			MassType_to_use = "Masses"
 		elif codes[code] == 'RAMSES': 
 			pf.current_time = pf.arr(pf.parameters['time'], 'code_time') # reset pf.current_time because it is incorrectly set up in frontends/ramses/data_structure.py, and I don't wish to mess with units there
-			FormationTimeType_to_use = "particle_age" # particle_age field actually means particle creation time, at least for this particular dataset, so the new field below is not needed			
+			FormationTimeType_to_use = "particle_age" # particle_age field actually means particle creation time, at least for this particular dataset, so the new field below is not needed
 			# if time != 0: # Only particle_age field exists in RAMSES (only for new stars + IC stars), so we create StellarFormationTime field
 			# 	def _FormationTime(field, data): 
 			# 		return pf.current_time - data["all", "particle_age"].in_units("s") 
@@ -878,7 +878,7 @@ for time in range(len(times)):
 			draw_SFR_mass = sp[(PartType_Star_to_use, "particle_mass")].in_units('Msun')
 			draw_SFR_ct   = sp[(PartType_Star_to_use, FormationTimeType_to_use)].in_units('Myr')
 			sfr = StarFormationRate(pf, star_mass = draw_SFR_mass, star_creation_time = draw_SFR_ct, 
-						volume = sp.volume(), bins = 50) # see: http://yt-project.org/docs/dev/analyzing/analysis_modules/star_analysis.html
+						volume = sp.volume(), bins = 25) # see: http://yt-project.org/docs/dev/analyzing/analysis_modules/star_analysis.html
 
 			sfr_ts[time].append(sfr.time.in_units('Myr')) # in Myr
 			sfr_cum_masses[time].append(sfr.Msol_cumulative) # in Msun
@@ -1099,7 +1099,7 @@ for time in range(len(times)):
 		for code in range(len(codes)):
 			lines = plt.plot(sfr_ts[time][code], sfr_cum_masses[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
 		plt.xlim(0, times[time])
-		plt.ylim(0, 5e9)
+		plt.ylim(0, 2.5e9)
 		plt.xlabel("$\mathrm{Time\ (Myr)}$")
 		plt.ylabel("$\mathrm{Stellar\ Mass\ (M_{\odot})}$")
 		plt.legend(codes, loc=2, frameon=True)
@@ -1108,11 +1108,11 @@ for time in range(len(times)):
 		plt.setp(ltext, fontsize='small')
 		plt.savefig("Stellar_mass_evolution_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
-		plt.subplot(111, aspect=28)
+		plt.subplot(111, aspect=49)
 		for code in range(len(codes)):
 			lines = plt.plot(sfr_ts[time][code], sfr_sfrs[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
 		plt.xlim(0, times[time])
-		plt.ylim(0, 14)
+		plt.ylim(0, 8)
 		plt.xlabel("$\mathrm{Time\ (Myr)}$")
 		plt.ylabel("$\mathrm{Star\ Formation\ Rate\ (M_{\odot}/yr)}$")
 		plt.legend(codes, loc=2, frameon=True)
