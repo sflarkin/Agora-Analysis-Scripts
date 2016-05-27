@@ -903,25 +903,18 @@ for time in range(len(times)):
 	# SAVE FIGURES
 	if draw_density_map == 1:
 		fig_density_map[time].savefig("Sigma_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 	if draw_temperature_map == 1:
 		fig_temperature_map[time].savefig("Temp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 	if draw_cellsize_map == 1:
 		fig_cellsize_map[time].savefig("Cell_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 	if draw_metal_map == 1:
 		fig_metal_map[time].savefig("Metal_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 	if draw_star_map == 1 and time != 0:
 		fig_star_map[time].savefig("Star_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 	if draw_PDF == 1:
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 	if draw_pos_vel_PDF >= 1:
 		fig_pos_vel_PDF[time].savefig("pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 		if draw_pos_vel_PDF == 2 and time != 0:
 			plt.clf()
 			plt.subplot(111, aspect=0.02)
@@ -939,7 +932,6 @@ for time in range(len(times)):
 			plt.clf()
 	if draw_star_pos_vel_PDF >= 1 and time != 0:
 		fig_star_pos_vel_PDF[time].savefig("star_pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 		if draw_star_pos_vel_PDF == 2 and time != 0:
 			plt.clf()
 			plt.subplot(111, aspect=0.02)
@@ -957,10 +949,8 @@ for time in range(len(times)):
 			plt.clf()
 	if draw_rad_height_PDF >= 1:
 		fig_rad_height_PDF[time].savefig("rad_height_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 	if draw_metal_PDF == 1:
 		fig_metal_PDF[time].savefig("metal_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		plt.clf()
 	if draw_density_DF == 1:
 		plt.clf()
 		plt.subplot(111, aspect=1)
