@@ -76,24 +76,24 @@ gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 color_names              = ['red', 'magenta', 'gold', 'lime', 'green', 'cyan', 'blue', 'blueviolet', 'black']
 linestyle_names          = ['-', '--', '-.']
 
-draw_density_map       = 1         # 0/1   = OFF/ON
-draw_temperature_map   = 1         # 0/1   = OFF/ON
-draw_cellsize_map      = 1         # 0/1   = OFF/ON
-draw_elevation_map     = 1         # 0/1   = OFF/ON
-draw_metal_map         = 1         # 0/1   = OFF/ON
-draw_star_map          = 1         # 0/1   = OFF/ON
-draw_PDF               = 1         # 0/1   = OFF/ON
-draw_pos_vel_PDF       = 0         # 0/1/2 = OFF/ON/ON with 1D profile
-draw_star_pos_vel_PDF  = 0         # 0/1/2 = OFF/ON/ON with 1D profile
-draw_rad_height_PDF    = 0         # 0/1/2 = OFF/ON/ON with analytic ftn subtracted
-draw_metal_PDF         = 0         # 0/1   = OFF/ON
-draw_density_DF        = 0         # 0/1   = OFF/ON
-draw_radius_DF         = 0         # 0/1   = OFF/ON
-draw_star_radius_DF    = 0         # 0/1   = OFF/ON
-draw_height_DF         = 0         # 0/1   = OFF/ON
-draw_SFR               = 0
-draw_cut_through       = 0         # 0/1   = OFF/ON
-add_nametag            = 1         # 0/1   = OFF/ON
+draw_density_map       = 1         # 0/1     = OFF/ON
+draw_temperature_map   = 1         # 0/1     = OFF/ON
+draw_cellsize_map      = 1         # 0/1     = OFF/ON
+draw_elevation_map     = 1         # 0/1     = OFF/ON
+draw_metal_map         = 1         # 0/1     = OFF/ON
+draw_star_map          = 1         # 0/1     = OFF/ON
+draw_PDF               = 1         # 0/1     = OFF/ON
+draw_pos_vel_PDF       = 0         # 0/1/2/3 = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile
+draw_star_pos_vel_PDF  = 0         # 0/1/2/3 = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile
+draw_rad_height_PDF    = 0         # 0/1/2/3 = OFF/ON/ON with 1D profile/ON with analytic ftn subtracted
+draw_metal_PDF         = 0         # 0/1     = OFF/ON
+draw_density_DF        = 0         # 0/1     = OFF/ON
+draw_radius_DF         = 0         # 0/1     = OFF/ON
+draw_star_radius_DF    = 0         # 0/1     = OFF/ON
+draw_height_DF         = 0         # 0/1     = OFF/ON
+draw_SFR               = 0         # 0/1     = OFF/ON
+draw_cut_through       = 0         # 0/1     = OFF/ON
+add_nametag            = 1         # 0/1     = OFF/ON
 times                  = [0, 500]  # in Myr
 figure_width           = 30        # in kpc
 n_ref                  = 256       # for SPH codes
@@ -126,6 +126,8 @@ pos_vel_xs             = []
 pos_vel_profiles       = []
 star_pos_vel_xs        = []
 star_pos_vel_profiles  = []
+rad_height_xs          = []
+rad_height_profiles    = []
 density_DF_xs          = []
 density_DF_profiles    = []
 radius_DF_xs           = []
@@ -187,6 +189,8 @@ for time in range(len(times)):
 		fig_rad_height_PDF   += [plt.figure(figsize=(50, 80))]
 		grid_rad_height_PDF  += [AxesGrid(fig_rad_height_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
+		rad_height_xs.append([])
+		rad_height_profiles.append([])
 	if draw_metal_PDF == 1:
 		fig_metal_PDF        += [plt.figure(figsize=(50, 80))]
 		grid_metal_PDF       += [AxesGrid(fig_metal_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
@@ -672,7 +676,7 @@ for time in range(len(times)):
 			p4._setup_plots()
 
 			# Add 1D profile line if requested
-			if draw_pos_vel_PDF == 2 and time != 0:
+			if draw_pos_vel_PDF >= 2 and time != 0:
 				if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 					p5 = ProfilePlot(sp_dense, ("index", "cylindrical_r"),  ("gas", "cylindrical_tangential_velocity"), \
 								 weight_field=("gas", "cell_mass"), n_bins=50, x_log=False)
@@ -730,7 +734,7 @@ for time in range(len(times)):
 			p41._setup_plots()
 
 			# Add 1D profile line if requested
-			if draw_star_pos_vel_PDF == 2 and time != 0:
+			if draw_star_pos_vel_PDF >= 2 and time != 0:
 				p51 = ProfilePlot(sp, (PartType_Star_to_use, "particle_position_cylindrical_radius"), (PartType_Star_to_use, "particle_velocity_cylindrical_theta"), \
 							 weight_field=(PartType_Star_to_use, "particle_mass"), n_bins=50, x_log=False)
 				p51.set_log((PartType_Star_to_use, "particle_velocity_cylindrical_theta"), False)
@@ -751,7 +755,7 @@ for time in range(len(times)):
 		if draw_rad_height_PDF >= 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
 			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
-				if draw_rad_height_PDF == 1:
+				if draw_rad_height_PDF == 1 or draw_rad_height_PDF == 2:
 					p55 = PhasePlot(sp, ("index", "cylindrical_r"), ("index", "cylindrical_z_abs"), ("gas", "density"), weight_field=("gas", "cell_mass"), fontsize=12, x_bins=200, y_bins=200)
 					p55.set_zlim(("gas", "density"), 1e-26, 1e-21)
 					p55.set_log("cylindrical_r", False)
@@ -759,7 +763,7 @@ for time in range(len(times)):
 					p55.set_unit("cylindrical_r", 'kpc')
 					p55.set_unit("cylindrical_z_abs", 'kpc')
 					plot55 = p55.plots[("gas", "density")]
-				elif draw_rad_height_PDF == 2:
+				elif draw_rad_height_PDF == 3:
 					p55 = PhasePlot(sp, ("index", "cylindrical_r"), ("index", "cylindrical_z_abs"), ("gas", "density_minus_analytic"), weight_field=("gas", "cell_mass"), fontsize=12, x_bins=200, y_bins=200)
 					p55.set_zlim(("gas", "density_minus_analytic"), -1e-24, 1e-24)
 					p55.set_log("cylindrical_r", False)
@@ -768,8 +772,8 @@ for time in range(len(times)):
 					p55.set_unit("cylindrical_z_abs", 'kpc')
 					plot55 = p55.plots[("gas", "density_minus_analytic")]
 			else:
-				# Because ParticlePhasePlot doesn't yet work for a log-log PDF for some reason, I will do the following trick.  
-				if draw_rad_height_PDF == 1:
+				# Because ParticlePhasePlot doesn't yet work for a linear-linear PDF for some reason, I will do the following trick.  
+				if draw_rad_height_PDF == 1 or draw_rad_height_PDF == 2:
 					p55 = PhasePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_position_cylindrical_z_abs"), (PartType_Gas_to_use, "Density_2"), weight_field=(PartType_Gas_to_use, "Mass_2"), fontsize=12, x_bins=200, y_bins=200)
 					p55.set_zlim((PartType_Gas_to_use, "Density_2"), 1e-26, 1e-21)
 					p55.set_log("particle_position_cylindrical_radius", False)
@@ -777,7 +781,7 @@ for time in range(len(times)):
 					p55.set_unit("particle_position_cylindrical_radius", 'kpc')
 					p55.set_unit("particle_position_cylindrical_z_abs", 'kpc')
 					plot55 = p55.plots[(PartType_Gas_to_use, "Density_2")]
-				elif draw_rad_height_PDF == 2:
+				elif draw_rad_height_PDF == 3:
 					p55 = PhasePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_position_cylindrical_z_abs"), (PartType_Gas_to_use, "Density_2_minus_analytic"), weight_field=(PartType_Gas_to_use, "Mass_2"), fontsize=12, x_bins=200, y_bins=200)
 					p55.set_zlim((PartType_Gas_to_use, "Density_2_minus_analytic"), -1e-24, 1e-24)
 					p55.set_log("particle_position_cylindrical_radius", False)
@@ -795,6 +799,34 @@ for time in range(len(times)):
 			plot55.axes = grid_rad_height_PDF[time][code].axes
 			if code == 0: plot55.cax = grid_rad_height_PDF[time].cbar_axes[0]
 			p55._setup_plots()
+
+			# Add 1D profile line if requested
+			if draw_rad_height_PDF == 2:
+				if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
+					p56 = ProfilePlot(sp, ("index", "cylindrical_r"),  ("index", "cylindrical_z_abs"), \
+								  weight_field=("gas", "cell_mass"), n_bins=50, x_log=False)
+					p56.set_log("cylindrical_r", False)
+					p56.set_log("cylindrical_z_abs", False)
+					p56.set_unit("cylindrical_r", 'kpc')
+					p56.set_unit("cylindrical_z_abs", 'kpc')
+					p56.set_xlim(0, 14)
+					p56.set_ylim("cylindrical_z_abs", 0, 1.4)
+					line = ln.Line2D(p56.profiles[0].x.in_units('kpc'), p56.profiles[0]["cylindrical_z_abs"].in_units('kpc'), linestyle="-", linewidth=2, color='k', alpha=0.7)
+					rad_height_xs[time].append(p56.profiles[0].x.in_units('kpc').d)
+					rad_height_profiles[time].append(p56.profiles[0]["cylindrical_z_abs"].in_units('kpc').d)
+				else:
+					p56 = ProfilePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_position_cylindrical_z_abs"), \
+								  weight_field=(PartType_Gas_to_use, MassType_to_use), n_bins=50, x_log=False)
+					p56.set_log("particle_position_cylindrical_radius", False)
+					p56.set_log("particle_position_cylindrical_z_abs", False)
+					p56.set_unit("particle_position_cylindrical_radius", 'kpc')
+					p56.set_unit("particle_position_cylindrical_z_abs", 'kpc')
+					p56.set_xlim(0, 14)
+					p56.set_ylim("particle_position_cylindrical_z_abs", 0, 1.4)
+					line = ln.Line2D(p56.profiles[0].x.in_units('kpc'), p56.profiles[0]["particle_position_cylindrical_z_abs"].in_units('kpc'), linestyle="-", linewidth=2, color='k', alpha=0.7)
+					rad_height_xs[time].append(p56.profiles[0].x.in_units('kpc').d)
+					rad_height_profiles[time].append(p56.profiles[0]["particle_position_cylindrical_z_abs"].in_units('kpc').d)
+				grid_rad_height_PDF[time][code].axes.add_line(line) 
 
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=1, prop=dict(size=10), frameon=True)
@@ -948,7 +980,7 @@ for time in range(len(times)):
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_pos_vel_PDF >= 1:
 		fig_pos_vel_PDF[time].savefig("pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		if draw_pos_vel_PDF == 2 and time != 0:
+		if draw_pos_vel_PDF >= 2 and time != 0:
 			plt.clf()
 			plt.subplot(111, aspect=0.02)
 			for code in range(len(codes)):
@@ -965,7 +997,7 @@ for time in range(len(times)):
 			plt.clf()
 	if draw_star_pos_vel_PDF >= 1 and time != 0:
 		fig_star_pos_vel_PDF[time].savefig("star_pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-		if draw_star_pos_vel_PDF == 2 and time != 0:
+		if draw_star_pos_vel_PDF >= 2 and time != 0:
 			plt.clf()
 			plt.subplot(111, aspect=0.02)
 			for code in range(len(codes)):
@@ -982,6 +1014,21 @@ for time in range(len(times)):
 			plt.clf()
 	if draw_rad_height_PDF >= 1:
 		fig_rad_height_PDF[time].savefig("rad_height_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		if draw_rad_height_PDF == 2 and time != 0:
+			plt.clf()
+			plt.subplot(111, aspect=7)
+			for code in range(len(codes)):
+				lines = plt.plot(rad_height_xs[time][code], rad_height_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+			plt.xlim(0, 14)
+			plt.ylim(0, 1.4)
+			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+			plt.ylabel("$\mathrm{Average\ Vertical\ Height\ (kpc)}$")
+			plt.legend(codes, loc=2, frameon=True)
+			leg = plt.gca().get_legend()
+			ltext = leg.get_texts()
+			plt.setp(ltext, fontsize='small')
+			plt.savefig("rad_height_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+			plt.clf()
 	if draw_metal_PDF == 1:
 		fig_metal_PDF[time].savefig("metal_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_density_DF == 1:
