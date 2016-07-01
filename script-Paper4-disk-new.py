@@ -50,7 +50,7 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 	     [file_location+'GASOLINE/LOW_dataset2_timezero.00001', file_location+'GASOLINE/LOW_dataset2.00335'],
   	     [file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500'],
 	     [file_location+'GIZMO/snapshot_temp_000', file_location+'GIZMO/snapshot_temp_100'],
- 	     [file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00236/info_00236.txt']]
+ 	     [file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00216/info_00216.txt']]
 
 # codes = ['ART-I']
 # filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d']]
@@ -69,7 +69,7 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 # codes = ['GIZMO']
 # filenames = [[file_location+'GIZMO/snapshot_temp_000', file_location+'GIZMO/snapshot_temp_100']]
 # codes = ['RAMSES']
-# filenames = [[file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00236/info_00236.txt']] 
+# filenames = [[file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00216/info_00216.txt']] 
 gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 			    'UnitMass_in_g'            :   1.989e+43,
 			    'UnitVelocity_in_cm_per_s' :      100000}
@@ -79,10 +79,11 @@ linestyle_names          = ['-', '--', '-.']
 draw_density_map       = 1         # 0/1   = OFF/ON
 draw_temperature_map   = 1         # 0/1   = OFF/ON
 draw_cellsize_map      = 1         # 0/1   = OFF/ON
+draw_elevation_map     = 1         # 0/1   = OFF/ON
 draw_metal_map         = 1         # 0/1   = OFF/ON
 draw_star_map          = 1         # 0/1   = OFF/ON
 draw_PDF               = 1         # 0/1   = OFF/ON
-draw_pos_vel_PDF       = 2         # 0/1/2 = OFF/ON/ON with 1D profile
+draw_pos_vel_PDF       = 0         # 0/1/2 = OFF/ON/ON with 1D profile
 draw_star_pos_vel_PDF  = 0         # 0/1/2 = OFF/ON/ON with 1D profile
 draw_rad_height_PDF    = 0         # 0/1/2 = OFF/ON/ON with analytic ftn subtracted
 draw_metal_PDF         = 0         # 0/1   = OFF/ON
@@ -102,6 +103,7 @@ disk_normal_vector     = [0.0, 0.0, 1.0]
 fig_density_map        = [] 
 fig_temperature_map    = []
 fig_cellsize_map       = []
+fig_elevation_map      = []
 fig_metal_map          = [] 
 fig_star_map           = [] 
 fig_PDF                = []
@@ -112,6 +114,7 @@ fig_metal_PDF          = []
 grid_density_map       = []
 grid_temperature_map   = []
 grid_cellsize_map      = []
+grid_elevation_map     = []
 grid_metal_map         = []
 grid_star_map          = []
 grid_PDF               = []
@@ -151,6 +154,10 @@ for time in range(len(times)):
 	if draw_cellsize_map == 1:
 		fig_cellsize_map     += [plt.figure(figsize=(100,20))]
 		grid_cellsize_map    += [AxesGrid(fig_cellsize_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
+	if draw_elevation_map == 1:
+		fig_elevation_map    += [plt.figure(figsize=(100,20))]
+		grid_elevation_map   += [AxesGrid(fig_elevation_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (1, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
 	if draw_metal_map == 1:
 		fig_metal_map        += [plt.figure(figsize=(100,20))]
@@ -416,6 +423,7 @@ for time in range(len(times)):
                 if codes[code] == 'ART-I' or codes[code] == 'ART-II': # metallicity field in ART-I has a different meaning (see frontends/art/fields.py), and metallicity field in ART-II is missing
 			def _metallicity_2(field, data):  
 				return data["gas", "metal_ii_density"] / data["gas", "density"]
+#                               return (data["gas", "metal_ii_density"] + data["gas", "metal_ia_density"]) / data["gas", "density"] # gives the same value as above in ART-I
 			pf.add_field(("gas", "metallicity"), function=_metallicity_2, force_override=True, display_name="Metallicity", take_log=True, units="") 
                 elif codes[code] == 'ENZO': # metallicity field in ENZO is in Zsun, so we create a new field
 			def _metallicity_2(field, data):  
@@ -481,7 +489,11 @@ for time in range(len(times)):
 		# FIND CENTER AND PROJ_REGION
 		v, cen = pf.h.find_max(("gas", "density")) # find the center to keep the galaxy at the center of all the images.
 		sp = pf.sphere(cen, (figure_width, "kpc"))
-		center = sp.quantities.center_of_mass(use_gas=True, use_particles=True).in_units("kpc")
+		cen2 = sp.quantities.center_of_mass(use_gas=True, use_particles=False).in_units("kpc")
+		sp2 = pf.sphere(cen2, (1.0, "kpc"))
+		cen3 = sp2.quantities.max_location(("gas", "density"))
+		center = pf.arr([cen3[1].d, cen3[2].d, cen3[3].d], 'code_length') # naive usage such as YTArray([cen3[1], cen3[2], cen3[3]]) doesn't work somehow for ART-II data
+		#center = pf.arr([cen3[2].d, cen3[3].d, cen3[4].d], 'code_length') # for yt-3.2.3 or before
                 if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 			proj_region = pf.box(center - YTArray([figure_width, figure_width, figure_width], 'kpc'),
 		 			     center + YTArray([figure_width, figure_width, figure_width], 'kpc')) # projected images made using a (2*figure_width)^3 box for AMR codes
@@ -536,6 +548,25 @@ for time in range(len(times)):
 				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
 				grid_cellsize_map[time][code].axes.add_artist(at)
 
+		# ELEVATION MAPS
+		if draw_elevation_map == 1:
+			def _CellzElevationpc(field,data): 
+				return ((data[("index", "z")] - center[2]).in_units('pc'))
+			pf.add_field(("index", "z_elevation"), function=_CellzElevationpc, units='pc', display_name="$z$ Elevation", take_log=False)
+			for ax in range(2, 3):  
+				p25 = ProjectionPlot(pf, ax, ("index", "z_elevation"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density"), fontsize=9)
+				p25.set_zlim(("index", "z_elevation"), -1000, 1000)
+				plot25 = p25.plots[("index", "z_elevation")]
+				
+				plot25.figure = fig_elevation_map[time]
+				plot25.axes = grid_elevation_map[time][(ax-2)*len(codes)+code].axes
+				if code == 0: plot25.cax = grid_elevation_map[time].cbar_axes[0]
+				p25._setup_plots()
+
+			if add_nametag == 1:
+				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
+				grid_elevation_map[time][code].axes.add_artist(at)
+
 		# METAL MAPS
 		if draw_metal_map == 1: 
 			for ax in range(1, 3):  
@@ -557,7 +588,7 @@ for time in range(len(times)):
 			for ax in range(1, 3):  
 				p27 = ParticleProjectionPlot(pf, ax, (PartType_Star_to_use, "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
 				p27.set_unit((PartType_Star_to_use, "particle_mass"), 'Msun')
-				p27.set_zlim((PartType_Star_to_use, "particle_mass"), 1e3, 1e7)
+				p27.set_zlim((PartType_Star_to_use, "particle_mass"), 1e4, 1e7)
 				p27.set_buff_size(400) # default is 800
 				p27.set_colorbar_label((PartType_Star_to_use, "particle_mass"), "Stellar Mass Per Pixel ($\mathrm{M}_{\odot}$)")
 				plot27 = p27.plots[(PartType_Star_to_use, "particle_mass")]
@@ -907,6 +938,8 @@ for time in range(len(times)):
 		fig_temperature_map[time].savefig("Temp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_cellsize_map == 1:
 		fig_cellsize_map[time].savefig("Cell_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+	if draw_elevation_map == 1:
+		fig_elevation_map[time].savefig("Elevation_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_metal_map == 1:
 		fig_metal_map[time].savefig("Metal_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_star_map == 1 and time != 0:
