@@ -387,12 +387,20 @@ for time in range(len(times)):
 				def _ParticleSizepc(field, data):  
 					return (data[(PartType_Gas_to_use, MassType_to_use)]/data[(PartType_Gas_to_use, "Density")])**(1./3.)
 				pf.add_field((PartType_Gas_to_use, "particle_size"), function=_ParticleSizepc, units="pc", display_name="$\Delta$ x", particle_type=True, take_log=True)
+				def _Inv2ParticleVolumepc(field, data):  
+					return (data[(PartType_Gas_to_use, MassType_to_use)]/data[(PartType_Gas_to_use, "Density")])**(-2.)
+				pf.add_field((PartType_Gas_to_use, "particle_volume_inv2"), function=_Inv2ParticleVolumepc, units="pc**(-6)", display_name="Inv2ParticleVolumepc", particle_type=True, take_log=True)
 				# Also creating smoothed field following an example in yt-project.org/docs/dev/cookbook/calculating_information.html; use hardcoded num_neighbors as in frontends/gadget/fields.py
 				fn = add_volume_weighted_smoothed_field(PartType_Gas_to_use, "Coordinates", MassType_to_use, SmoothingLengthType_to_use, "Density", "particle_size", pf.field_info, nneighbors=64)
-				# Alias doesn't work -- e.g. pf.field_info.alias(("gas", "metallicity"), fn[0]) -- check alias below; so I simply add ("gas", "particle_size")
+				fn = add_volume_weighted_smoothed_field(PartType_Gas_to_use, "Coordinates", MassType_to_use, SmoothingLengthType_to_use, "Density", "particle_volume_inv2", pf.field_info, nneighbors=64)
+
+				# Alias doesn't work -- e.g. pf.field_info.alias(("gas", "particle_size"), fn[0]) -- check alias below; so I simply add ("gas", "particle_size")
 				def _ParticleSizepc_2(field, data):  
 					return data["deposit", PartType_Gas_to_use+"_smoothed_"+"particle_size"]
 				pf.add_field(("gas", "particle_size"), function=_ParticleSizepc_2, units="pc", force_override=True, display_name="$\Delta$ x", particle_type=False, take_log=True)
+				def _Inv2ParticleVolumepc_2(field, data):  
+					return data["deposit", PartType_Gas_to_use+"_smoothed_"+"particle_volume_inv2"]
+				pf.add_field(("gas", "particle_volume_inv2"), function=_Inv2ParticleVolumepc_2, units="pc**(-6)", force_override=True, display_name="Inv2ParticleVolumepc", particle_type=False, take_log=True)
 		
 		# ADDITIONAL FIELDS II: TEMPERATURE
                 if codes[code] == 'GEAR' or codes[code] == 'GADGET-3' or codes[code] == 'RAMSES': 
@@ -571,12 +579,12 @@ for time in range(len(times)):
 				for ax in range(1, 3):  
 					if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 						p251 = ProjectionPlot(pf, ax, ("index", "cell_size"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), \
-									     weight_field = ("gas", "density_squared"), fontsize=9)
+									     weight_field = ("index", "cell_volume_inv2"), fontsize=9)
 						p251.set_zlim(("index", "cell_size"), 50, 500)
 						plot251 = p251.plots[("index", "cell_size")]
 					else:
 						p251 = ProjectionPlot(pf, ax, ("gas", "particle_size"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), \
-									     weight_field = ("gas", "density_squared"), fontsize=9)
+									     weight_field = ("gas", "particle_volume_inv2"), fontsize=9)
 						p251.set_zlim(("gas", "particle_size"), 50, 500)
 						plot251 = p251.plots[("gas", "particle_size")]
 
@@ -588,6 +596,9 @@ for time in range(len(times)):
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
 				grid_cellsize_map[time][code].axes.add_artist(at)
+				if draw_cellsize_map == 2:
+					at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
+					grid_cellsize_map_2[time][code].axes.add_artist(at)
 
 		# ELEVATION MAPS
 		if draw_elevation_map == 1:
