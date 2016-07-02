@@ -78,7 +78,7 @@ linestyle_names          = ['-', '--', '-.']
 
 draw_density_map       = 1         # 0/1     = OFF/ON
 draw_temperature_map   = 1         # 0/1     = OFF/ON
-draw_cellsize_map      = 1         # 0/1     = OFF/ON
+draw_cellsize_map      = 2         # 0/1/2   = OFF/ON/ON also with [M/rho]^(1/3) resolution definition for SPH
 draw_elevation_map     = 1         # 0/1     = OFF/ON
 draw_metal_map         = 1         # 0/1     = OFF/ON
 draw_star_map          = 1         # 0/1     = OFF/ON
@@ -103,6 +103,7 @@ disk_normal_vector     = [0.0, 0.0, 1.0]
 fig_density_map        = [] 
 fig_temperature_map    = []
 fig_cellsize_map       = []
+fig_cellsize_map_2     = []
 fig_elevation_map      = []
 fig_metal_map          = [] 
 fig_star_map           = [] 
@@ -114,6 +115,7 @@ fig_metal_PDF          = []
 grid_density_map       = []
 grid_temperature_map   = []
 grid_cellsize_map      = []
+grid_cellsize_map_2    = []
 grid_elevation_map     = []
 grid_metal_map         = []
 grid_star_map          = []
@@ -153,9 +155,12 @@ for time in range(len(times)):
 		fig_temperature_map  += [plt.figure(figsize=(100,20))]
 		grid_temperature_map += [AxesGrid(fig_temperature_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
-	if draw_cellsize_map == 1:
+	if draw_cellsize_map >= 1:
 		fig_cellsize_map     += [plt.figure(figsize=(100,20))]
 		grid_cellsize_map    += [AxesGrid(fig_cellsize_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
+		fig_cellsize_map_2   += [plt.figure(figsize=(100,20))]
+		grid_cellsize_map_2  += [AxesGrid(fig_cellsize_map_2[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
 	if draw_elevation_map == 1:
 		fig_elevation_map    += [plt.figure(figsize=(100,20))]
@@ -311,11 +316,13 @@ for time in range(len(times)):
 		MassType_to_use = "Mass"
 		MetallicityType_to_use = "Metallicity"
 		FormationTimeType_to_use = "StellarFormationTime" # for GADGET/GEAR/GIZMO, this field has to be added in frontends/sph/fields.py, in which only "FormationTime" can be recognized
+		SmoothingLengthType_to_use = "SmoothingLength"
 
 		if codes[code] == 'CHANGA' or codes[code] == 'GASOLINE':
 			MetallicityType_to_use = "Metals"
 			PartType_Star_to_use = "NewStars"
 			FormationTimeType_to_use = "FormationTime"
+			SmoothingLengthType_to_use = "smoothing_length"
 			def NewStars(pfilter, data): # see http://yt-project.org/docs/dev/analyzing/filtering.html#filtering-particle-fields
 			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0)
 			add_particle_filter(PartType_Star_to_use, function=NewStars, filtered_type="Stars", requires=[FormationTimeType_to_use])
@@ -365,7 +372,7 @@ for time in range(len(times)):
 		pf.coordinates.x_axis['y'] = 0
 		pf.coordinates.y_axis['y'] = 2
 
-		# ADDITIONAL FIELDS I
+		# ADDITIONAL FIELDS I: DENSITY SQUARED, RESOLUTION ELEMENTS
 		def _density_squared(field, data):  
 			return data[("gas", "density")]**2
 		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
@@ -375,6 +382,17 @@ for time in range(len(times)):
 		def _Inv2CellVolumeCode(field,data): 
 			return data[("index", "cell_volume")]**-2
 		pf.add_field(("index", "cell_volume_inv2"), function=_Inv2CellVolumeCode, units='code_length**(-6)', display_name="Inv2CellVolumeCode", take_log=True)	
+		if draw_cellsize_map == 2: 
+			if codes[code] == 'CHANGA' or codes[code] == 'GEAR' or codes[code] == 'GADGET-3' or codes[code] == 'GASOLINE' or codes[code] == 'GIZMO':
+				def _ParticleSizepc(field, data):  
+					return (data[(PartType_Gas_to_use, MassType_to_use)]/data[(PartType_Gas_to_use, "Density")])**(1./3.)
+				pf.add_field((PartType_Gas_to_use, "particle_size"), function=_ParticleSizepc, units="pc", display_name="$\Delta$ x", particle_type=True, take_log=True)
+				# Also creating smoothed field following an example in yt-project.org/docs/dev/cookbook/calculating_information.html; use hardcoded num_neighbors as in frontends/gadget/fields.py
+				fn = add_volume_weighted_smoothed_field(PartType_Gas_to_use, "Coordinates", MassType_to_use, SmoothingLengthType_to_use, "Density", "particle_size", pf.field_info, nneighbors=64)
+				# Alias doesn't work -- e.g. pf.field_info.alias(("gas", "metallicity"), fn[0]) -- check alias below; so I simply add ("gas", "particle_size")
+				def _ParticleSizepc_2(field, data):  
+					return data["deposit", PartType_Gas_to_use+"_smoothed_"+"particle_size"]
+				pf.add_field(("gas", "particle_size"), function=_ParticleSizepc_2, units="pc", force_override=True, display_name="$\Delta$ x", particle_type=False, take_log=True)
 		
 		# ADDITIONAL FIELDS II: TEMPERATURE
                 if codes[code] == 'GEAR' or codes[code] == 'GADGET-3' or codes[code] == 'RAMSES': 
@@ -443,7 +461,7 @@ for time in range(len(times)):
  		  	pf.add_field((PartType_Gas_to_use, MetallicityType_to_use), function=_metallicity_2, display_name="Metallicity", particle_type=True, take_log=True, units="")
  		  	# Also creating smoothed field following an example in yt-project.org/docs/dev/cookbook/calculating_information.html; use hardcoded num_neighbors as in frontends/gadget/fields.py
  		  	fn = add_volume_weighted_smoothed_field(PartType_Gas_to_use, "Coordinates", MassType_to_use, "SmoothingLength", "Density", MetallicityType_to_use, pf.field_info, nneighbors=64)
- 		  	# Alias doesn't work -- e.g. pf.field_info.alias(("gas", "metallicity"), fn[0]) -- probably because pf=GadgetDataset(), not load(); so I add and replace existing ("gas", "metallicity")
+ 		  	# Alias doesn't work -- e.g. pf.field_info.alias(("gas", "metallicity"), fn[0]) -- probably because pf=GadgetDataset()?, not load()?; so I add and replace existing ("gas", "metallicity")
 			def _metallicity_3(field, data):  
 				return data["deposit", PartType_Gas_to_use+"_smoothed_"+MetallicityType_to_use]
  		  	pf.add_field(("gas", "metallicity"), function=_metallicity_3, force_override=True, display_name="Metallicity", particle_type=False, take_log=True, units="")
@@ -537,7 +555,7 @@ for time in range(len(times)):
 				grid_temperature_map[time][code].axes.add_artist(at)
 
 		# CELL-SIZE MAPS
-		if draw_cellsize_map == 1:
+		if draw_cellsize_map >= 1:
 			for ax in range(1, 3):  
 				p25 = ProjectionPlot(pf, ax, ("index", "cell_size"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("index", "cell_volume_inv2"), fontsize=9)
 				p25.set_zlim(("index", "cell_size"), 50, 500)
@@ -547,6 +565,25 @@ for time in range(len(times)):
 				plot25.axes = grid_cellsize_map[time][(ax-1)*len(codes)+code].axes
 				if code == 0: plot25.cax = grid_cellsize_map[time].cbar_axes[0]
 				p25._setup_plots()
+
+			# Create another map with a different resolution definition if requested
+			if draw_cellsize_map == 2:
+				for ax in range(1, 3):  
+					if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
+						p251 = ProjectionPlot(pf, ax, ("index", "cell_size"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), \
+									     weight_field = ("gas", "density_squared"), fontsize=9)
+						p251.set_zlim(("index", "cell_size"), 50, 500)
+						plot251 = p251.plots[("index", "cell_size")]
+					else:
+						p251 = ProjectionPlot(pf, ax, ("gas", "particle_size"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), \
+									     weight_field = ("gas", "density_squared"), fontsize=9)
+						p251.set_zlim(("gas", "particle_size"), 50, 500)
+						plot251 = p251.plots[("gas", "particle_size")]
+
+					plot251.figure = fig_cellsize_map_2[time]
+					plot251.axes = grid_cellsize_map_2[time][(ax-1)*len(codes)+code].axes
+					if code == 0: plot251.cax = grid_cellsize_map_2[time].cbar_axes[0]
+					p251._setup_plots()
 
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
@@ -558,14 +595,14 @@ for time in range(len(times)):
 				return ((data[("index", "z")] - center[2]).in_units('pc'))
 			pf.add_field(("index", "z_elevation"), function=_CellzElevationpc, units='pc', display_name="$z$ Elevation", take_log=False)
 			for ax in range(2, 3):  
-				p25 = ProjectionPlot(pf, ax, ("index", "z_elevation"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density"), fontsize=9)
-				p25.set_zlim(("index", "z_elevation"), -1000, 1000)
-				plot25 = p25.plots[("index", "z_elevation")]
+				p255 = ProjectionPlot(pf, ax, ("index", "z_elevation"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density"), fontsize=9)
+				p255.set_zlim(("index", "z_elevation"), -1000, 1000)
+				plot255 = p255.plots[("index", "z_elevation")]
 				
-				plot25.figure = fig_elevation_map[time]
-				plot25.axes = grid_elevation_map[time][(ax-2)*len(codes)+code].axes
-				if code == 0: plot25.cax = grid_elevation_map[time].cbar_axes[0]
-				p25._setup_plots()
+				plot255.figure = fig_elevation_map[time]
+				plot255.axes = grid_elevation_map[time][(ax-2)*len(codes)+code].axes
+				if code == 0: plot255.cax = grid_elevation_map[time].cbar_axes[0]
+				p255._setup_plots()
 
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
@@ -968,8 +1005,10 @@ for time in range(len(times)):
 		fig_density_map[time].savefig("Sigma_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_temperature_map == 1:
 		fig_temperature_map[time].savefig("Temp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
-	if draw_cellsize_map == 1:
+	if draw_cellsize_map >= 1:
 		fig_cellsize_map[time].savefig("Cell_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+	if draw_cellsize_map == 2:
+		fig_cellsize_map_2[time].savefig("Resolution_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_elevation_map == 1:
 		fig_elevation_map[time].savefig("Elevation_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_metal_map == 1:
