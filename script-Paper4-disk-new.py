@@ -130,6 +130,8 @@ pos_disp_xs            = []
 pos_disp_profiles      = []
 star_pos_vel_xs        = []
 star_pos_vel_profiles  = []
+star_pos_disp_xs       = []
+star_pos_disp_profiles = []
 rad_height_xs          = []
 rad_height_profiles    = []
 density_DF_xs          = []
@@ -194,6 +196,8 @@ for time in range(len(times)):
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
 		star_pos_vel_xs.append([])
 		star_pos_vel_profiles.append([])
+		star_pos_disp_xs.append([])
+		star_pos_disp_profiles.append([])
 	if draw_rad_height_PDF >= 1:
 		fig_rad_height_PDF   += [plt.figure(figsize=(50, 80))]
 		grid_rad_height_PDF  += [AxesGrid(fig_rad_height_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
@@ -317,6 +321,7 @@ for time in range(len(times)):
 		# PARTICLE FILED NAMES FOR SPH CODES, AND STELLAR PARTICLE FILTERS
 		PartType_Gas_to_use = "Gas"     
 		PartType_Star_to_use = "Stars"
+		PartType_StarBeforeFiltered_to_use = "all"
 		MassType_to_use = "Mass"
 		MetallicityType_to_use = "Metallicity"
 		FormationTimeType_to_use = "StellarFormationTime" # for GADGET/GEAR/GIZMO, this field has to be added in frontends/sph/fields.py, in which only "FormationTime" can be recognized
@@ -325,34 +330,37 @@ for time in range(len(times)):
 		if codes[code] == 'CHANGA' or codes[code] == 'GASOLINE':
 			MetallicityType_to_use = "Metals"
 			PartType_Star_to_use = "NewStars"
+			PartType_StarBeforeFiltered_to_use = "Stars"
 			FormationTimeType_to_use = "FormationTime"
 			SmoothingLengthType_to_use = "smoothing_length"
 			def NewStars(pfilter, data): # see http://yt-project.org/docs/dev/analyzing/filtering.html#filtering-particle-fields
 			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0)
-			add_particle_filter(PartType_Star_to_use, function=NewStars, filtered_type="Stars", requires=[FormationTimeType_to_use])
+			add_particle_filter(PartType_Star_to_use, function=NewStars, filtered_type=PartType_StarBeforeFiltered_to_use, requires=[FormationTimeType_to_use])
 			pf.add_particle_filter(PartType_Star_to_use)
 			pf.periodicity = (True, True, True) # this is needed especially when bPeriodic = 0 in GASOLINE, to avoid RuntimeError in geometry/selection_routines.pyx:855
 		elif codes[code] == 'ART-I': 
+			PartType_StarBeforeFiltered_to_use = "stars"
 			FormationTimeType_to_use = "particle_creation_time"
 			def Stars(pfilter, data): 
 			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) # for this to work, you need a fix in frontends/art/io.py
 #			 	return ((data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) & (data[(pfilter.filtered_type, "particle_index")] >= 212500)) # without the fix metioned above, the line won't work because all "stars"="specie1" have the same wrong particle_creation_time of 6.851 Gyr; so you will have to use this quick and dirty patch
-			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="stars", requires=[FormationTimeType_to_use, "particle_index"])
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type=PartType_StarBeforeFiltered_to_use, requires=[FormationTimeType_to_use, "particle_index"])
 			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == 'ART-II': 
+			PartType_StarBeforeFiltered_to_use = "STAR"
 			if time != 0: # BIRTH_TIME field exists in ART-II but as a dimensionless quantity for some reason in frontends/artio/fields.py; so we create StellarFormationTime field
 				def _FormationTime(field, data): 
 					return pf.arr(data["STAR", "BIRTH_TIME"].d, 'code_time')
 				pf.add_field(("STAR", FormationTimeType_to_use), function=_FormationTime, particle_type=True, take_log=False, units="code_time") 
 			def Stars(pfilter, data): 
 			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0)
-			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="STAR", requires=[FormationTimeType_to_use])
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type=PartType_StarBeforeFiltered_to_use, requires=[FormationTimeType_to_use])
 			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == 'ENZO': 
 			FormationTimeType_to_use = "creation_time"
 			def Stars(pfilter, data): 
 			 	return ((data[(pfilter.filtered_type, "particle_type")] == 2) & (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0))
-			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="all", requires=["particle_type", FormationTimeType_to_use])
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type=PartType_StarBeforeFiltered_to_use, requires=["particle_type", FormationTimeType_to_use])
 			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == "GADGET-3":
 			PartType_Gas_to_use = "PartType0"				
@@ -367,7 +375,7 @@ for time in range(len(times)):
 			# 	pf.add_field(("all", FormationTimeType_to_use), function=_FormationTime, particle_type=True, take_log=False, units="code_time") 
 			def Stars(pfilter, data): 
 			 	return (data[(pfilter.filtered_type, "particle_age")] > 0)
-			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type="all", requires=["particle_age"])
+			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type=PartType_StarBeforeFiltered_to_use, requires=["particle_age"])
 			pf.add_particle_filter(PartType_Star_to_use)
 				
 		# AXIS SWAP FOR PLOT COLLECTION
@@ -871,6 +879,42 @@ for time in range(len(times)):
 				star_pos_vel_profiles[time].append(p51.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s').d)
 				grid_star_pos_vel_PDF[time][code].axes.add_line(line) 
 
+			# Add dispersion profile if requested
+			if draw_star_pos_vel_PDF == 3 and time != 0:
+				def _particle_local_rotational_velocity_x(field, data):
+					trans = np.zeros(data[(PartType_StarBeforeFiltered_to_use, "particle_velocity_x")].shape)
+					dr = 0.5*(star_pos_vel_xs[time][code][1] - star_pos_vel_xs[time][code][0])
+					for radius, v_rot_local in zip(star_pos_vel_xs[time][code], star_pos_vel_profiles[time][code]):
+						ind = np.where((data[(PartType_StarBeforeFiltered_to_use, "particle_position_cylindrical_radius")].in_units("kpc") >= (radius - dr)) & \
+								       (data[(PartType_StarBeforeFiltered_to_use, "particle_position_cylindrical_radius")].in_units("kpc") < (radius + dr)))
+						trans[ind] = -np.sin(data[(PartType_StarBeforeFiltered_to_use, "particle_position_cylindrical_theta")][ind]) * v_rot_local * 1e5 
+					return data.ds.arr(trans, "cm/s").in_base(data.ds.unit_system.name)
+				pf.add_field((PartType_StarBeforeFiltered_to_use, "particle_local_rotational_velocity_x"), function=_particle_local_rotational_velocity_x, take_log=False, particle_type=True, units="cm/s") 
+				def _particle_local_rotational_velocity_y(field, data):
+					trans = np.zeros(data[(PartType_StarBeforeFiltered_to_use, "particle_velocity_y")].shape)
+					dr = 0.5*(star_pos_vel_xs[time][code][1] - star_pos_vel_xs[time][code][0])
+					for radius, v_rot_local in zip(star_pos_vel_xs[time][code], star_pos_vel_profiles[time][code]):
+						ind = np.where((data[(PartType_StarBeforeFiltered_to_use, "particle_position_cylindrical_radius")].in_units("kpc") >= (radius - dr)) & \
+								       (data[(PartType_StarBeforeFiltered_to_use, "particle_position_cylindrical_radius")].in_units("kpc") < (radius + dr)))
+						trans[ind] = np.cos(data[(PartType_StarBeforeFiltered_to_use, "particle_position_cylindrical_theta")][ind]) * v_rot_local * 1e5 
+					return data.ds.arr(trans, "cm/s").in_base(data.ds.unit_system.name)
+				pf.add_field((PartType_StarBeforeFiltered_to_use, "particle_local_rotational_velocity_y"), function=_particle_local_rotational_velocity_y, take_log=False, particle_type=True, units="cm/s") 
+				def _particle_velocity_minus_local_rotational_velocity_squared(field, data):
+					return (data[(PartType_StarBeforeFiltered_to_use, "particle_velocity_x")] - data[(PartType_StarBeforeFiltered_to_use, "particle_local_rotational_velocity_x")])**2 + \
+					    (data[(PartType_StarBeforeFiltered_to_use, "particle_velocity_y")] - data[(PartType_StarBeforeFiltered_to_use, "particle_local_rotational_velocity_y")])**2 + \
+					    (data[(PartType_StarBeforeFiltered_to_use, "particle_velocity_z")])**2 
+				pf.add_field((PartType_StarBeforeFiltered_to_use, "particle_velocity_minus_local_rotational_velocity_squared"), function=_particle_velocity_minus_local_rotational_velocity_squared, 
+					     take_log=False, particle_type=True, units="cm**2/s**2") 
+				pf.add_particle_filter(PartType_Star_to_use) # This is needed for a filtered particle type PartType_Star_to_use to work, because we have just created new particle fields. 
+
+				p515 = ProfilePlot(sp, (PartType_Star_to_use, "particle_position_cylindrical_radius"), (PartType_Star_to_use, "particle_velocity_minus_local_rotational_velocity_squared"), \
+							  weight_field=(PartType_Star_to_use, "particle_mass"), n_bins=50, x_log=False)
+				p515.set_log((PartType_Star_to_use, "particle_position_cylindrical_radius"), False)
+				p515.set_unit("particle_position_cylindrical_radius", 'kpc')
+				p515.set_xlim(1e-3, 14)
+				star_pos_disp_xs[time].append(p515.profiles[0].x.in_units('kpc').d)
+				star_pos_disp_profiles[time].append(np.sqrt(p515.profiles[0]["particle_velocity_minus_local_rotational_velocity_squared"]).in_units('km/s').d)
+
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=4, prop=dict(size=10), frameon=True)
 				grid_star_pos_vel_PDF[time][code].axes.add_artist(at)
@@ -1152,6 +1196,21 @@ for time in range(len(times)):
 			ltext = leg.get_texts()
 			plt.setp(ltext, fontsize='small')
 			plt.savefig("star_pos_vel_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+			plt.clf()
+		if draw_star_pos_vel_PDF == 3 and time != 0:
+			plt.clf()
+			plt.subplot(111, aspect=0.04)
+			for code in range(len(codes)):
+				lines = plt.plot(star_pos_disp_xs[time][code], star_pos_disp_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+			plt.xlim(0, 14)
+			plt.ylim(0, 200)
+			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+			plt.ylabel("$\mathrm{Velocity\ Dispersion\ (km/s)}$")
+			plt.legend(codes, loc=1, frameon=True)
+			leg = plt.gca().get_legend()
+			ltext = leg.get_texts()
+			plt.setp(ltext, fontsize='small')
+			plt.savefig("star_pos_disp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
 	if draw_rad_height_PDF >= 1:
 		fig_rad_height_PDF[time].savefig("rad_height_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
