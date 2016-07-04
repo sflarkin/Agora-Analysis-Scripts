@@ -126,6 +126,8 @@ grid_rad_height_PDF    = []
 grid_metal_PDF         = []
 pos_vel_xs             = []
 pos_vel_profiles       = []
+pos_disp_xs            = []
+pos_disp_profiles      = []
 star_pos_vel_xs        = []
 star_pos_vel_profiles  = []
 rad_height_xs          = []
@@ -184,6 +186,8 @@ for time in range(len(times)):
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.05, aspect = False)]
 		pos_vel_xs.append([])
 		pos_vel_profiles.append([])
+		pos_disp_xs.append([])
+		pos_disp_profiles.append([])
 	if draw_star_pos_vel_PDF >= 1:
 		fig_star_pos_vel_PDF += [plt.figure(figsize=(50, 80))]
 		grid_star_pos_vel_PDF+= [AxesGrid(fig_star_pos_vel_PDF[time], (0.01,0.01,0.99,0.99), nrows_ncols = (3, int(math.ceil(len(codes)/3.0))), axes_pad = 0.05, add_all = True, share_all = True,
@@ -749,6 +753,78 @@ for time in range(len(times)):
 					pos_vel_profiles[time].append(p5.profiles[0]["particle_velocity_cylindrical_theta"].in_units('km/s').d)
 				grid_pos_vel_PDF[time][code].axes.add_line(line) 
 
+			# Add dispersion profile if requested
+			if draw_pos_vel_PDF == 3 and time != 0:
+				if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
+					# To calculate velocity dispersion -- residual velocity components other than the rotational velocity found above -- we will need a mass-weighted average of [v_i - v_rot_local]**2
+					# Here we assumed that the disk is on x-y plane; i.e. the variable disk_normal_vector above needs to be [0.0, 0.0, 1.0]
+					def _local_rotational_velocity_x(field, data):
+						trans = np.zeros(data[("gas", "velocity_x")].shape)
+						dr = 0.5*(pos_vel_xs[time][code][1] - pos_vel_xs[time][code][0])
+						for radius, v_rot_local in zip(pos_vel_xs[time][code], pos_vel_profiles[time][code]):
+							ind = np.where((data[("index", "cylindrical_r")].in_units("kpc") >= (radius - dr)) & (data[("index", "cylindrical_r")].in_units("kpc") < (radius + dr)))
+							trans[ind] = -np.sin(data["index", 'cylindrical_theta'][ind]) * v_rot_local * 1e5 # in cm/s
+						return data.ds.arr(trans, "cm/s").in_base(data.ds.unit_system.name)
+					pf.add_field(("gas", "local_rotational_velocity_x"), function=_local_rotational_velocity_x, take_log=False, particle_type=False, units="cm/s") 
+					def _local_rotational_velocity_y(field, data):
+						trans = np.zeros(data[("gas", "velocity_y")].shape)
+						dr = 0.5*(pos_vel_xs[time][code][1] - pos_vel_xs[time][code][0])
+						for radius, v_rot_local in zip(pos_vel_xs[time][code], pos_vel_profiles[time][code]):
+							ind = np.where((data[("index", "cylindrical_r")].in_units("kpc") >= (radius - dr)) & (data[("index", "cylindrical_r")].in_units("kpc") < (radius + dr)))
+							trans[ind] =  np.cos(data["index", 'cylindrical_theta'][ind]) * v_rot_local * 1e5
+						return data.ds.arr(trans, "cm/s").in_base(data.ds.unit_system.name)
+					pf.add_field(("gas", "local_rotational_velocity_y"), function=_local_rotational_velocity_y, take_log=False, particle_type=False, units="cm/s") 
+					def _velocity_minus_local_rotational_velocity_squared(field, data):
+						return (data[("gas", "velocity_x")] - data[("gas", "local_rotational_velocity_x")])**2 + \
+						    (data[("gas", "velocity_y")] - data[("gas", "local_rotational_velocity_y")])**2 + \
+						    (data[("gas", "velocity_z")])**2 
+					pf.add_field(("gas", "velocity_minus_local_rotational_velocity_squared"), function=_velocity_minus_local_rotational_velocity_squared, 
+						     take_log=False, particle_type=False, units="cm**2/s**2") 
+#					slc = SlicePlot(pf, 'z', ("gas", "local_rotational_velocity_y"), center = center, width = (figure_width, 'kpc'))
+#					slc = SlicePlot(pf, 'z', ("gas", "velocity_minus_local_rotational_velocity_squared"), center = center, width = (figure_width, 'kpc')) # this should give zeros everywhere for IC at t=0
+#					slc.save()
+						    
+					p55 = ProfilePlot(sp_dense, ("index", "cylindrical_r"),  ("gas", "velocity_minus_local_rotational_velocity_squared"), \
+								  weight_field=("gas", "cell_mass"), n_bins=50, x_log=False)
+					p55.set_log("cylindrical_r", False)
+					p55.set_unit("cylindrical_r", 'kpc')
+					p55.set_xlim(1e-3, 14)
+					pos_disp_xs[time].append(p55.profiles[0].x.in_units('kpc').d)
+					pos_disp_profiles[time].append(np.sqrt(p55.profiles[0]["velocity_minus_local_rotational_velocity_squared"]).in_units('km/s').d)
+				else:
+					def _particle_local_rotational_velocity_x(field, data):
+						trans = np.zeros(data[(PartType_Gas_to_use, "particle_velocity_x")].shape)
+						dr = 0.5*(pos_vel_xs[time][code][1] - pos_vel_xs[time][code][0])
+						for radius, v_rot_local in zip(pos_vel_xs[time][code], pos_vel_profiles[time][code]):
+							ind = np.where((data[(PartType_Gas_to_use, "particle_position_cylindrical_radius")].in_units("kpc") >= (radius - dr)) & \
+									       (data[(PartType_Gas_to_use, "particle_position_cylindrical_radius")].in_units("kpc") < (radius + dr)))
+							trans[ind] = -np.sin(data[(PartType_Gas_to_use, "particle_position_cylindrical_theta")][ind]) * v_rot_local * 1e5 
+						return data.ds.arr(trans, "cm/s").in_base(data.ds.unit_system.name)
+					pf.add_field((PartType_Gas_to_use, "particle_local_rotational_velocity_x"), function=_particle_local_rotational_velocity_x, take_log=False, particle_type=True, units="cm/s") 
+					def _particle_local_rotational_velocity_y(field, data):
+						trans = np.zeros(data[(PartType_Gas_to_use, "particle_velocity_y")].shape)
+						dr = 0.5*(pos_vel_xs[time][code][1] - pos_vel_xs[time][code][0])
+						for radius, v_rot_local in zip(pos_vel_xs[time][code], pos_vel_profiles[time][code]):
+							ind = np.where((data[(PartType_Gas_to_use, "particle_position_cylindrical_radius")].in_units("kpc") >= (radius - dr)) & \
+									       (data[(PartType_Gas_to_use, "particle_position_cylindrical_radius")].in_units("kpc") < (radius + dr)))
+							trans[ind] = np.cos(data[(PartType_Gas_to_use, "particle_position_cylindrical_theta")][ind]) * v_rot_local * 1e5 
+						return data.ds.arr(trans, "cm/s").in_base(data.ds.unit_system.name)
+					pf.add_field((PartType_Gas_to_use, "particle_local_rotational_velocity_y"), function=_particle_local_rotational_velocity_y, take_log=False, particle_type=True, units="cm/s") 
+					def _particle_velocity_minus_local_rotational_velocity_squared(field, data):
+						return (data[(PartType_Gas_to_use, "particle_velocity_x")] - data[(PartType_Gas_to_use, "particle_local_rotational_velocity_x")])**2 + \
+						    (data[(PartType_Gas_to_use, "particle_velocity_y")] - data[(PartType_Gas_to_use, "particle_local_rotational_velocity_y")])**2 + \
+						    (data[(PartType_Gas_to_use, "particle_velocity_z")])**2 
+					pf.add_field((PartType_Gas_to_use, "particle_velocity_minus_local_rotational_velocity_squared"), function=_particle_velocity_minus_local_rotational_velocity_squared, 
+						     take_log=False, particle_type=True, units="cm**2/s**2") 
+
+					p55 = ProfilePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_velocity_minus_local_rotational_velocity_squared"), \
+								 weight_field=(PartType_Gas_to_use, MassType_to_use), n_bins=50, x_log=False)
+					p55.set_log("particle_position_cylindrical_radius", False)
+					p55.set_unit("particle_position_cylindrical_radius", 'kpc')
+					p55.set_xlim(1e-3, 14)
+					pos_disp_xs[time].append(p55.profiles[0].x.in_units('kpc').d)
+					pos_disp_profiles[time].append(np.sqrt(p55.profiles[0]["particle_velocity_minus_local_rotational_velocity_squared"]).in_units('km/s').d)
+
 			if add_nametag == 1:
 				at = AnchoredText("%s" % codes[code], loc=4, prop=dict(size=10), frameon=True)
 				grid_pos_vel_PDF[time][code].axes.add_artist(at)
@@ -1044,6 +1120,21 @@ for time in range(len(times)):
 			ltext = leg.get_texts()
 			plt.setp(ltext, fontsize='small')
 			plt.savefig("pos_vel_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+			plt.clf()
+		if draw_pos_vel_PDF == 3 and time != 0:
+			plt.clf()
+			plt.subplot(111, aspect=0.04)
+			for code in range(len(codes)):
+				lines = plt.plot(pos_disp_xs[time][code], pos_disp_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+			plt.xlim(0, 14)
+			plt.ylim(0, 200)
+			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+			plt.ylabel("$\mathrm{Velocity\ Dispersion\ (km/s)}$")
+			plt.legend(codes, loc=1, frameon=True)
+			leg = plt.gca().get_legend()
+			ltext = leg.get_texts()
+			plt.setp(ltext, fontsize='small')
+			plt.savefig("pos_disp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
 	if draw_star_pos_vel_PDF >= 1 and time != 0:
 		fig_star_pos_vel_PDF[time].savefig("star_pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
