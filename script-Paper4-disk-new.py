@@ -321,7 +321,7 @@ for time in range(len(times)):
 		# PARTICLE FILED NAMES FOR SPH CODES, AND STELLAR PARTICLE FILTERS
 		PartType_Gas_to_use = "Gas"     
 		PartType_Star_to_use = "Stars"
-		PartType_StarBeforeFiltered_to_use = "all"
+		PartType_StarBeforeFiltered_to_use = "Stars"
 		MassType_to_use = "Mass"
 		MetallicityType_to_use = "Metallicity"
 		FormationTimeType_to_use = "StellarFormationTime" # for GADGET/GEAR/GIZMO, this field has to be added in frontends/sph/fields.py, in which only "FormationTime" can be recognized
@@ -357,6 +357,7 @@ for time in range(len(times)):
 			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type=PartType_StarBeforeFiltered_to_use, requires=[FormationTimeType_to_use])
 			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == 'ENZO': 
+			PartType_StarBeforeFiltered_to_use = "all"
 			FormationTimeType_to_use = "creation_time"
 			def Stars(pfilter, data): 
 			 	return ((data[(pfilter.filtered_type, "particle_type")] == 2) & (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0))
@@ -365,8 +366,10 @@ for time in range(len(times)):
 		elif codes[code] == "GADGET-3":
 			PartType_Gas_to_use = "PartType0"				
 			PartType_Star_to_use = "PartType4"				
+			PartType_StarBeforeFiltered_to_use = "PartType4"
 			MassType_to_use = "Masses"
 		elif codes[code] == 'RAMSES': 
+			PartType_StarBeforeFiltered_to_use = "all"
 			pf.current_time = pf.arr(pf.parameters['time'], 'code_time') # reset pf.current_time because it is incorrectly set up in frontends/ramses/data_structure.py, and I don't wish to mess with units there
 			FormationTimeType_to_use = "particle_age" # particle_age field actually means particle creation time, at least for this particular dataset, so the new field below is not needed
 			# if time != 0: # Only particle_age field exists in RAMSES (only for new stars + IC stars), so we create StellarFormationTime field
