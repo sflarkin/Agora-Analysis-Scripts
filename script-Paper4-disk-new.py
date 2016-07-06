@@ -1440,7 +1440,7 @@ for time in range(len(times)):
 			temp = []
 			dh = height_DF_xs[time][code][1] - height_DF_xs[time][code][0]
 			for height in range(len(height_DF_profiles[time][code])):
-				surface_area = 2*dh*1e3 * figure_width*1e3 * 2 # surface_area = 2*d(height)*figure_width in pc^2
+				surface_area = 2 * dh*1e3 * figure_width*1e3 # surface_area = 2*d(height)*figure_width in pc^2
 				temp.append(height_DF_profiles[time][code][height] / surface_area)
 			height_surface_density[time].append(temp)
 			lines = plt.plot(height_DF_xs[time][code], height_surface_density[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
