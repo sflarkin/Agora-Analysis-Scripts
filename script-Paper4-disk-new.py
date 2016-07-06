@@ -75,6 +75,7 @@ gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
 			    'UnitVelocity_in_cm_per_s' :      100000}
 color_names              = ['red', 'magenta', 'gold', 'lime', 'green', 'cyan', 'blue', 'blueviolet', 'black']
 linestyle_names          = ['-', '--', '-.']
+marker_names             = ['o', 's', 'v', '^', '<', '>', 'D', 'p', '*']
 
 draw_density_map       = 1         # 0/1     = OFF/ON
 draw_temperature_map   = 1         # 0/1     = OFF/ON
@@ -89,7 +90,7 @@ draw_rad_height_PDF    = 0         # 0/1/2/3 = OFF/ON/ON with 1D profile/ON with
 draw_metal_PDF         = 0         # 0/1     = OFF/ON
 draw_density_DF        = 0         # 0/1     = OFF/ON
 draw_radius_DF         = 0         # 0/1     = OFF/ON
-draw_star_radius_DF    = 0         # 0/1     = OFF/ON
+draw_star_radius_DF    = 0         # 0/1/2   = OFF/ON/ON with SFR profile and K-S plot (when 2, this automatically turns on draw_radius_DF)
 draw_height_DF         = 0         # 0/1     = OFF/ON
 draw_SFR               = 0         # 0/1     = OFF/ON
 draw_cut_through       = 0         # 0/1     = OFF/ON
@@ -138,10 +139,16 @@ density_DF_xs          = []
 density_DF_profiles    = []
 radius_DF_xs           = []
 radius_DF_profiles     = []
+surface_density        = []
 star_radius_DF_xs      = []
 star_radius_DF_profiles= []
+star_surface_density   = []
+sfr_radius_DF_xs       = []
+sfr_radius_DF_profiles = []
+sfr_surface_density    = []
 height_DF_xs           = []
 height_DF_profiles     = []
+height_surface_density = []
 sfr_ts                 = []
 sfr_cum_masses         = []
 sfr_sfrs               = []
@@ -211,15 +218,23 @@ for time in range(len(times)):
 	if draw_density_DF == 1:
 		density_DF_xs.append([])
 		density_DF_profiles.append([])
+	if draw_star_radius_DF == 2: 
+		draw_radius_DF = 1
 	if draw_radius_DF == 1:
 		radius_DF_xs.append([])
 		radius_DF_profiles.append([])
-	if draw_star_radius_DF == 1:
+		surface_density.append([])
+	if draw_star_radius_DF >= 1:
 		star_radius_DF_xs.append([])
-		star_radius_DF_profiles.append([])
+		star_radius_DF_profiles.append([])		
+		star_surface_density.append([])
+		sfr_radius_DF_xs.append([])
+		sfr_radius_DF_profiles.append([])		
+		sfr_surface_density.append([])
 	if draw_height_DF == 1:
 		height_DF_xs.append([])
 		height_DF_profiles.append([])
+		height_surface_density.append([])
 	if draw_SFR == 1:
 		sfr_ts.append([])
 		sfr_cum_masses.append([])
@@ -387,10 +402,12 @@ for time in range(len(times)):
 		pf.coordinates.x_axis['y'] = 0
 		pf.coordinates.y_axis['y'] = 2
 
-		# ADDITIONAL FIELDS I: DENSITY SQUARED, RESOLUTION ELEMENTS
+		# ADDITIONAL FIELDS I: GLOBALLY USED FIELDS
 		def _density_squared(field, data):  
 			return data[("gas", "density")]**2
 		pf.add_field(("gas", "density_squared"), function=_density_squared, units="g**2/cm**6")
+
+		# ADDITIONAL FIELDS II: FOR CELL SIZE AND RESOLUTION MAPS
 		def _CellSizepc(field,data): 
 			return (data[("index", "cell_volume")].in_units('pc**3'))**(1/3.)
 		pf.add_field(("index", "cell_size"), function=_CellSizepc, units='pc', display_name="$\Delta$ x", take_log=True )
@@ -417,7 +434,7 @@ for time in range(len(times)):
 					return data["deposit", PartType_Gas_to_use+"_smoothed_"+"particle_volume_inv2"]
 				pf.add_field(("gas", "particle_volume_inv2"), function=_Inv2ParticleVolumepc_2, units="pc**(-6)", force_override=True, display_name="Inv2ParticleVolumepc", particle_type=False, take_log=True)
 		
-		# ADDITIONAL FIELDS II: TEMPERATURE
+		# ADDITIONAL FIELDS III: TEMPERATURE
                 if codes[code] == 'GEAR' or codes[code] == 'GADGET-3' or codes[code] == 'RAMSES': 
 			# From grackle/src/python/utilities/convenience.py: Calculate a tabulated approximation to mean molecular weight (valid for data that used Grackle 2.0 or below)
 			def calc_mu_table_local(temperature):
@@ -464,7 +481,7 @@ for time in range(len(times)):
 					return YTArray(convert_T_over_mu_to_T(T_over_mu), 'K') # now T
 				pf.add_field(("gas", "temperature"), function=_temperature_3, force_override=True, units="K")
 
-		# ADDITIONAL FIELDS III: METALLICITY (IN MASS FRACTION, NOT IN ZSUN)
+		# ADDITIONAL FIELDS IV: METALLICITY (IN MASS FRACTION, NOT IN ZSUN)
                 if codes[code] == 'ART-I' or codes[code] == 'ART-II': # metallicity field in ART-I has a different meaning (see frontends/art/fields.py), and metallicity field in ART-II is missing
 			def _metallicity_2(field, data):  
 				return data["gas", "metal_ii_density"] / data["gas", "density"]
@@ -489,7 +506,7 @@ for time in range(len(times)):
 				return data["deposit", PartType_Gas_to_use+"_smoothed_"+MetallicityType_to_use]
  		  	pf.add_field(("gas", "metallicity"), function=_metallicity_3, force_override=True, display_name="Metallicity", particle_type=False, take_log=True, units="")
 
-		# ADDITIONAL FIELDS IV: FAKE PARTICLE FIELDS, CYLINDRICAL COORDINATES, etc.
+		# ADDITIONAL FIELDS V: FAKE PARTICLE FIELDS, CYLINDRICAL COORDINATES, etc.
 		def rho_agora_disk(r, z):
 			r_d = YTArray(3.432, 'kpc')
 			z_d = 0.1*r_d
@@ -1070,7 +1087,7 @@ for time in range(len(times)):
 				radius_DF_profiles[time].append(p7.profiles[0]["Mass_2"].in_units('Msun').d)
 
 		# CYLINDRICAL RADIUS DF + RADIALLY-BINNED SURFACE DENSITY FOR NEW STARS
-		if draw_star_radius_DF == 1 and time != 0:
+		if draw_star_radius_DF >= 1 and time != 0:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
 			sp.set_field_parameter("normal", disk_normal_vector) 
 			pf.field_info[(PartType_Star_to_use, "particle_mass")].take_log = True
@@ -1081,6 +1098,27 @@ for time in range(len(times)):
 			p71.set_xlim(1e-3, 15) 
 			star_radius_DF_xs[time].append(p71.profiles[0].x.in_units('kpc').d)
 			star_radius_DF_profiles[time].append(p71.profiles[0]["particle_mass"].in_units('Msun').d)
+
+			# Add RADIALLY-BINNED SFR SURFACE DENSITY PROFILE if requested (SFR estimated using stars younger than 10 Myrs old)
+			if draw_star_radius_DF == 2 and time != 0:
+				young_star_cutoff = 20 # in Myr; hardcoded 
+				def _particle_mass_young_stars(field, data):  
+					trans = np.zeros(data[(PartType_StarBeforeFiltered_to_use, "particle_mass")].shape)
+					ind = np.where(data[(PartType_StarBeforeFiltered_to_use, FormationTimeType_to_use)].in_units('Myr') > (pf.current_time.in_units('Myr').d - young_star_cutoff)) # mass for young stars only
+					trans[ind] = data[(PartType_StarBeforeFiltered_to_use, "particle_mass")].in_units('code_mass')
+					return data.ds.arr(trans, "code_mass").in_base(data.ds.unit_system.name)
+				pf.add_field((PartType_StarBeforeFiltered_to_use, "particle_mass_young_stars"), function=_particle_mass_young_stars, units='code_mass', particle_type=True, take_log=True)
+				pf.add_particle_filter(PartType_Star_to_use) # This is needed for a filtered particle type PartType_Star_to_use to work, because we have just created new particle fields. 
+
+				pf.field_info[(PartType_Star_to_use, "particle_mass_young_stars")].take_log = True
+				pf.field_info[(PartType_Star_to_use, "particle_mass_young_stars")].output_units = 'code_mass' # this turned out to be crucial!; check output_units above
+				pf.field_info[(PartType_Star_to_use, "particle_position_cylindrical_radius")].take_log = False
+				p72 = ProfilePlot(sp, (PartType_Star_to_use, "particle_position_cylindrical_radius"), (PartType_Star_to_use, "particle_mass_young_stars"), \
+							  weight_field=None, n_bins=50, x_log=False, accumulation=False)
+				p72.set_unit("particle_position_cylindrical_radius", 'kpc')
+				p72.set_xlim(1e-3, 15) 
+				sfr_radius_DF_xs[time].append(p72.profiles[0].x.in_units('kpc').d)
+				sfr_radius_DF_profiles[time].append(p72.profiles[0]["particle_mass_young_stars"].in_units('Msun').d/young_star_cutoff/1e6) # in Msun/yr
 
 		# VERTICAL HEIGHT DF + VERTICALLY-BINNED GAS SURFACE DENSITY 
 		if draw_height_DF == 1:
@@ -1109,6 +1147,7 @@ for time in range(len(times)):
 			pf.unit_registry.add('pccm', pf.unit_registry.lut['pc'][0], length, "\\rm{pc}/(1+z)") 
 			pf.hubble_constant = 0.71; pf.omega_lambda = 0.73; pf.omega_matter = 0.27; pf.omega_curvature = 0.0
 
+			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
 			draw_SFR_mass = sp[(PartType_Star_to_use, "particle_mass")].in_units('Msun')
 			draw_SFR_ct   = sp[(PartType_Star_to_use, FormationTimeType_to_use)].in_units('Myr')
 			sfr = StarFormationRate(pf, star_mass = draw_SFR_mass, star_creation_time = draw_SFR_ct, 
@@ -1271,14 +1310,15 @@ for time in range(len(times)):
 		plt.clf()
 		plt.subplot(111, aspect=1)
 		for code in range(len(codes)):
-			surface_density = []
+			temp = []
 			for radius in range(len(radius_DF_profiles[time][code])):
 				if radius == 0:
-					surface_area = 4*np.pi*(radius_DF_xs[time][code][radius]*1e3)**2 # in pc^2
+					surface_area = np.pi*(radius_DF_xs[time][code][radius]*1e3)**2 # in pc^2
 				else:
-					surface_area = 4*np.pi*((radius_DF_xs[time][code][radius]*1e3)**2 - (radius_DF_xs[time][code][radius-1]*1e3)**2)
-				surface_density.append(radius_DF_profiles[time][code][radius] / surface_area)
-			lines = plt.plot(radius_DF_xs[time][code], surface_density, color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+					surface_area = np.pi*((radius_DF_xs[time][code][radius]*1e3)**2 - (radius_DF_xs[time][code][radius-1]*1e3)**2)
+				temp.append(radius_DF_profiles[time][code][radius] / surface_area)
+			surface_density[time].append(temp)
+			lines = plt.plot(radius_DF_xs[time][code], surface_density[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
 		plt.semilogy()
 		plt.xlim(0, 14)
 		plt.ylim(1e-1, 5e3)
@@ -1290,7 +1330,7 @@ for time in range(len(times)):
 		plt.setp(ltext, fontsize='small')
 		plt.savefig("gas_surface_density_radial_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
-	if draw_star_radius_DF == 1 and time != 0:
+	if draw_star_radius_DF >= 1 and time != 0:
 		plt.clf()
 		plt.subplot(111, aspect=1)
 		for code in range(len(codes)):
@@ -1309,14 +1349,15 @@ for time in range(len(times)):
 		plt.clf()
 		plt.subplot(111, aspect=1)
 		for code in range(len(codes)):
-			surface_density = []
+			temp = []
 			for radius in range(len(star_radius_DF_profiles[time][code])):
 				if radius == 0:
-					surface_area = 4*np.pi*(star_radius_DF_xs[time][code][radius]*1e3)**2 # in pc^2
+					surface_area = np.pi*(star_radius_DF_xs[time][code][radius]*1e3)**2 # in pc^2
 				else:
-					surface_area = 4*np.pi*((star_radius_DF_xs[time][code][radius]*1e3)**2 - (star_radius_DF_xs[time][code][radius-1]*1e3)**2)
-				surface_density.append(star_radius_DF_profiles[time][code][radius] / surface_area)
-			lines = plt.plot(star_radius_DF_xs[time][code], surface_density, color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+					surface_area = np.pi*((star_radius_DF_xs[time][code][radius]*1e3)**2 - (star_radius_DF_xs[time][code][radius-1]*1e3)**2)
+				temp.append(star_radius_DF_profiles[time][code][radius] / surface_area)
+			star_surface_density[time].append(temp)
+			lines = plt.plot(star_radius_DF_xs[time][code], star_surface_density[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
 		plt.semilogy()
 		plt.xlim(0, 14)
 		plt.ylim(1e-1, 5e3)
@@ -1328,6 +1369,61 @@ for time in range(len(times)):
 		plt.setp(ltext, fontsize='small')
 		plt.savefig("star_surface_density_radial_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
+		if draw_star_radius_DF == 2 and time != 0:
+			plt.subplot(111, aspect=1)
+			for code in range(len(codes)):
+				temp = []
+				for radius in range(len(sfr_radius_DF_profiles[time][code])):
+					if radius == 0:
+						surface_area = np.pi*(sfr_radius_DF_xs[time][code][radius])**2 # in kpc^2
+					else:
+						surface_area = np.pi*((sfr_radius_DF_xs[time][code][radius])**2 - (sfr_radius_DF_xs[time][code][radius-1])**2)
+					temp.append(sfr_radius_DF_profiles[time][code][radius] / surface_area)
+				sfr_surface_density[time].append(temp)
+				lines = plt.plot(sfr_radius_DF_xs[time][code], sfr_surface_density[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+			plt.semilogy()
+			plt.xlim(0, 14)
+			plt.ylim(1e-4, 1e2)
+			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$")
+			plt.ylabel("$\mathrm{Star\ Formation\ Rate\ Surface\ Density\ (M_{\odot}/yr/kpc^2)}$")
+			plt.legend(codes, loc=1, frameon=True)
+			leg = plt.gca().get_legend()
+			ltext = leg.get_texts()
+			plt.setp(ltext, fontsize='small')
+			plt.savefig("sfr_surface_density_radial_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+			plt.clf()
+
+			# Draw K-S plot; below assumes that surface_density (or radius_DF_profiles) and sfr_surface_density (or sfr_radius_DF_profiles) have the identical size (n_bins in ProfilePlot)
+			plt.subplot(111)
+			t = np.arange(-2, 5, 0.01)
+			KS_fit_t1 = []
+			KS_fit_t2 = []
+			for code in range(len(codes)):
+				# Remove bins where SFR surface density is zero
+				KS_x = np.array(surface_density[time][code]) 
+				KS_x[np.where(np.array(sfr_surface_density[time][code]) < 1e-10)] = 0
+				KS_x = np.log10(KS_x)
+				KS_y = np.log10(np.array(sfr_surface_density[time][code])) 
+				KS_x = KS_x[~np.isinf(KS_x)]
+				KS_y = KS_y[~np.isinf(KS_y)]
+				t1, t2 = np.polyfit(KS_x, KS_y, 1) 
+				KS_fit_t1.append(t1)
+				KS_fit_t2.append(t2)
+				plt.scatter(KS_x, KS_y, color=color_names[code], edgecolor=color_names[code], s=30, linewidth=0.7, marker=marker_names[code], alpha=0.5)
+			plt.xlim(0, 4)
+			plt.ylim(-4, 2)
+			plt.xlabel("$\mathrm{Gas\ Surface\ Density\ (M_{\odot}/pc^2)}$")
+			plt.ylabel("$\mathrm{Star\ Formation\ Rate\ Surface\ Density\ (M_{\odot}/yr/kpc^2)}$")
+			plt.legend(codes, loc=2, frameon=True)
+			leg = plt.gca().get_legend()
+			ltext = leg.get_texts()
+			plt.setp(ltext, fontsize='small')
+			plt.plot(t, 1.37*t - 3.78, 'k--', linewidth=2.5) # observational fit by Kennicutt et al. 2007
+			plt.savefig("K-S_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+			for code in range(len(codes)):
+				plt.plot(t, np.polyval([KS_fit_t1[code], KS_fit_t2[code]], t), color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))]) # linear fits
+			plt.savefig("K-S_with_fits_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+			plt.clf()
 	if draw_height_DF == 1:
 		plt.clf()
 		plt.subplot(111, aspect=0.5)
@@ -1347,14 +1443,15 @@ for time in range(len(times)):
 		plt.clf()
 		plt.subplot(111, aspect=0.8)
 		for code in range(len(codes)):
-			surface_density = []
+			temp = []
 			for height in range(len(height_DF_profiles[time][code])):
 				if height == 0:
 					surface_area = height_DF_xs[time][code][height]*1e3 * figure_width*1e3 * 2 # surface_area = 2*d(height)*figure_width in pc^2
 				else:
 					surface_area = (height_DF_xs[time][code][height] - height_DF_xs[time][code][height-1])*1e3 * figure_width*1e3 * 2
-				surface_density.append(height_DF_profiles[time][code][height] / surface_area)
-			lines = plt.plot(height_DF_xs[time][code], surface_density, color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
+				temp.append(height_DF_profiles[time][code][height] / surface_area)
+			height_surface_density[time].append(temp)
+			lines = plt.plot(height_DF_xs[time][code], height_surface_density[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
 		plt.semilogy()
 		plt.xlim(0, 1.4)
 		plt.ylim(1e-1, 5e3)
