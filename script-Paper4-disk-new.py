@@ -1105,7 +1105,7 @@ for time in range(len(times)):
 				def _particle_mass_young_stars(field, data):  
 					trans = np.zeros(data[(PartType_StarBeforeFiltered_to_use, "particle_mass")].shape)
 					ind = np.where(data[(PartType_StarBeforeFiltered_to_use, FormationTimeType_to_use)].in_units('Myr') > (pf.current_time.in_units('Myr').d - young_star_cutoff)) # mass for young stars only
-					trans[ind] = data[(PartType_StarBeforeFiltered_to_use, "particle_mass")].in_units('code_mass')
+					trans[ind] = data[(PartType_StarBeforeFiltered_to_use, "particle_mass")][ind].in_units('code_mass')
 					return data.ds.arr(trans, "code_mass").in_base(data.ds.unit_system.name)
 				pf.add_field((PartType_StarBeforeFiltered_to_use, "particle_mass_young_stars"), function=_particle_mass_young_stars, units='code_mass', particle_type=True, take_log=True)
 				pf.add_particle_filter(PartType_Star_to_use) # This is needed for a filtered particle type PartType_Star_to_use to work, because we have just created new particle fields. 
@@ -1311,11 +1311,9 @@ for time in range(len(times)):
 		plt.subplot(111, aspect=1)
 		for code in range(len(codes)):
 			temp = []
+			dr = 0.5*(radius_DF_xs[time][code][1] - radius_DF_xs[time][code][0]) # Here we assume that ProfilePlot was made with linearly binned radius_DF_xs
 			for radius in range(len(radius_DF_profiles[time][code])):
-				if radius == 0:
-					surface_area = np.pi*(radius_DF_xs[time][code][radius]*1e3)**2 # in pc^2
-				else:
-					surface_area = np.pi*((radius_DF_xs[time][code][radius]*1e3)**2 - (radius_DF_xs[time][code][radius-1]*1e3)**2)
+				surface_area = np.pi*(((radius_DF_xs[time][code][radius]+dr)*1e3)**2 - ((radius_DF_xs[time][code][radius]-dr)*1e3)**2)
 				temp.append(radius_DF_profiles[time][code][radius] / surface_area)
 			surface_density[time].append(temp)
 			lines = plt.plot(radius_DF_xs[time][code], surface_density[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
@@ -1350,11 +1348,9 @@ for time in range(len(times)):
 		plt.subplot(111, aspect=1)
 		for code in range(len(codes)):
 			temp = []
+			dr = 0.5*(star_radius_DF_xs[time][code][1] - star_radius_DF_xs[time][code][0])
 			for radius in range(len(star_radius_DF_profiles[time][code])):
-				if radius == 0:
-					surface_area = np.pi*(star_radius_DF_xs[time][code][radius]*1e3)**2 # in pc^2
-				else:
-					surface_area = np.pi*((star_radius_DF_xs[time][code][radius]*1e3)**2 - (star_radius_DF_xs[time][code][radius-1]*1e3)**2)
+				surface_area = np.pi*(((star_radius_DF_xs[time][code][radius]+dr)*1e3)**2 - ((star_radius_DF_xs[time][code][radius]-dr)*1e3)**2)
 				temp.append(star_radius_DF_profiles[time][code][radius] / surface_area)
 			star_surface_density[time].append(temp)
 			lines = plt.plot(star_radius_DF_xs[time][code], star_surface_density[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
@@ -1373,11 +1369,9 @@ for time in range(len(times)):
 			plt.subplot(111, aspect=1)
 			for code in range(len(codes)):
 				temp = []
+				dr = 0.5*(sfr_radius_DF_xs[time][code][1] - sfr_radius_DF_xs[time][code][0])
 				for radius in range(len(sfr_radius_DF_profiles[time][code])):
-					if radius == 0:
-						surface_area = np.pi*(sfr_radius_DF_xs[time][code][radius])**2 # in kpc^2
-					else:
-						surface_area = np.pi*((sfr_radius_DF_xs[time][code][radius])**2 - (sfr_radius_DF_xs[time][code][radius-1])**2)
+					surface_area = np.pi*((sfr_radius_DF_xs[time][code][radius]+dr)**2 - (sfr_radius_DF_xs[time][code][radius]-dr)**2)
 					temp.append(sfr_radius_DF_profiles[time][code][radius] / surface_area)
 				sfr_surface_density[time].append(temp)
 				lines = plt.plot(sfr_radius_DF_xs[time][code], sfr_surface_density[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
@@ -1414,7 +1408,7 @@ for time in range(len(times)):
 			plt.ylim(-4, 1.5)
 			plt.xlabel("$\mathrm{Gas\ Surface\ Density\ (M_{\odot}/pc^2)}$")
 			plt.ylabel("$\mathrm{Star\ Formation\ Rate\ Surface\ Density\ (M_{\odot}/yr/kpc^2)}$")
-			plt.legend(codes, loc=2, frameon=True)
+			plt.legend(codes, loc=4, frameon=True)
 			leg = plt.gca().get_legend()
 			ltext = leg.get_texts()
 			plt.setp(ltext, fontsize='small')
@@ -1444,11 +1438,9 @@ for time in range(len(times)):
 		plt.subplot(111, aspect=0.8)
 		for code in range(len(codes)):
 			temp = []
+			dh = height_DF_xs[time][code][1] - height_DF_xs[time][code][0]
 			for height in range(len(height_DF_profiles[time][code])):
-				if height == 0:
-					surface_area = height_DF_xs[time][code][height]*1e3 * figure_width*1e3 * 2 # surface_area = 2*d(height)*figure_width in pc^2
-				else:
-					surface_area = (height_DF_xs[time][code][height] - height_DF_xs[time][code][height-1])*1e3 * figure_width*1e3 * 2
+				surface_area = 2*dh*1e3 * figure_width*1e3 * 2 # surface_area = 2*d(height)*figure_width in pc^2
 				temp.append(height_DF_profiles[time][code][height] / surface_area)
 			height_surface_density[time].append(temp)
 			lines = plt.plot(height_DF_xs[time][code], height_surface_density[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))])
