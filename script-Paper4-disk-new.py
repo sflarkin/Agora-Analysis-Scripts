@@ -24,6 +24,7 @@ from mpl_toolkits.axes_grid1.anchored_artists import AnchoredText
 from yt.fields.particle_fields import add_volume_weighted_smoothed_field
 from yt.fields.particle_fields import add_nearest_neighbor_field
 from yt.analysis_modules.star_analysis.api import StarFormationRate
+from yt.analysis_modules.halo_analysis.api import *
 from yt.data_objects.particle_filters import add_particle_filter
 mylog.setLevel(1)
 
@@ -83,6 +84,7 @@ draw_cellsize_map      = 2         # 0/1/2   = OFF/ON/ON also with [M/rho]^(1/3)
 draw_elevation_map     = 1         # 0/1     = OFF/ON
 draw_metal_map         = 1         # 0/1     = OFF/ON
 draw_star_map          = 1         # 0/1     = OFF/ON
+draw_star_clump_stats  = 0         # 0/1/2   = OFF/ON/ON with additional star_map with annotated clumps
 draw_PDF               = 1         # 0/1     = OFF/ON
 draw_pos_vel_PDF       = 0         # 0/1/2/3 = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile
 draw_star_pos_vel_PDF  = 0         # 0/1/2/3 = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile
@@ -108,6 +110,8 @@ fig_cellsize_map_2     = []
 fig_elevation_map      = []
 fig_metal_map          = [] 
 fig_star_map           = [] 
+fig_star_map_2         = [] 
+fig_star_clump_stats   = [] 
 fig_PDF                = []
 fig_pos_vel_PDF        = []
 fig_star_pos_vel_PDF   = []
@@ -120,11 +124,14 @@ grid_cellsize_map_2    = []
 grid_elevation_map     = []
 grid_metal_map         = []
 grid_star_map          = []
+grid_star_map_2        = []
+grid_star_clump_stats  = [] 
 grid_PDF               = []
 grid_pos_vel_PDF       = []
 grid_star_pos_vel_PDF  = []
 grid_rad_height_PDF    = []
 grid_metal_PDF         = []
+star_clump_masses      = []
 pos_vel_xs             = []
 pos_vel_profiles       = []
 pos_disp_xs            = []
@@ -184,6 +191,11 @@ for time in range(len(times)):
 	if draw_star_map == 1:
 		fig_star_map         += [plt.figure(figsize=(100,20))]
 		grid_star_map        += [AxesGrid(fig_star_map[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
+						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
+	if draw_star_clump_stats >= 1:
+		star_clump_masses.append([])
+		fig_star_map_2       += [plt.figure(figsize=(100,20))]
+		grid_star_map_2      += [AxesGrid(fig_star_map_2[time], (0.01,0.01,0.99,0.99), nrows_ncols = (2, len(codes)), axes_pad = 0.02, add_all = True, share_all = True,
 						  label_mode = "1", cbar_mode = "single", cbar_location = "right", cbar_size = "2%", cbar_pad = 0.02)]
 	if draw_PDF == 1:
 		fig_PDF              += [plt.figure(figsize=(50, 80))]
@@ -549,8 +561,8 @@ for time in range(len(times)):
 		####################################
 
 		# FIND CENTER AND PROJ_REGION
-		v, cen = pf.h.find_max(("gas", "density")) # find the center to keep the galaxy at the center of all the images.
-		sp = pf.sphere(cen, (figure_width, "kpc"))
+		v, cen = pf.h.find_max(("gas", "density")) # find the center to keep the galaxy at the center of all the images; here we assume that the gas disk is no bigger than 30 kpc in radius
+		sp = pf.sphere(cen, (30.0, "kpc")) 
 		cen2 = sp.quantities.center_of_mass(use_gas=True, use_particles=False).in_units("kpc")
 		sp2 = pf.sphere(cen2, (1.0, "kpc"))
 		cen3 = sp2.quantities.max_location(("gas", "density"))
@@ -567,6 +579,7 @@ for time in range(len(times)):
 			for ax in range(1, 3):  
 				p = ProjectionPlot(pf, ax, ("gas", "density"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
 				p.set_zlim(("gas", "density"), 1e-6, 1e-1)			
+				p.set_cmap(("gas", "density"), 'algae')
 				plot = p.plots[("gas", "density")]
 
 				plot.figure = fig_density_map[time]
@@ -583,6 +596,7 @@ for time in range(len(times)):
 			for ax in range(1, 3):  
 				p2 = ProjectionPlot(pf, ax, ("gas", "temperature"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density_squared"), fontsize=9)
 				p2.set_zlim(("gas", "temperature"), 1e1, 1e6)
+				p2.set_cmap(("gas", "temperature"), 'algae')
 				plot2 = p2.plots[("gas", "temperature")]
 				
 				plot2.figure = fig_temperature_map[time]
@@ -599,6 +613,7 @@ for time in range(len(times)):
 			for ax in range(1, 3):  
 				p25 = ProjectionPlot(pf, ax, ("index", "cell_size"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("index", "cell_volume_inv2"), fontsize=9)
 				p25.set_zlim(("index", "cell_size"), 50, 500)
+				p25.set_cmap(("index", "cell_size"), 'algae')
 				plot25 = p25.plots[("index", "cell_size")]
 				
 				plot25.figure = fig_cellsize_map[time]
@@ -613,11 +628,13 @@ for time in range(len(times)):
 						p251 = ProjectionPlot(pf, ax, ("index", "cell_size"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), \
 									     weight_field = ("index", "cell_volume_inv2"), fontsize=9)
 						p251.set_zlim(("index", "cell_size"), 50, 500)
+						p251.set_cmap(("index", "cell_size"), 'algae')
 						plot251 = p251.plots[("index", "cell_size")]
 					else:
 						p251 = ProjectionPlot(pf, ax, ("gas", "particle_size"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), \
 									     weight_field = ("gas", "particle_volume_inv2"), fontsize=9)
 						p251.set_zlim(("gas", "particle_size"), 50, 500)
+						p251.set_cmap(("gas", "particle_size"), 'algae')
 						plot251 = p251.plots[("gas", "particle_size")]
 
 					plot251.figure = fig_cellsize_map_2[time]
@@ -640,6 +657,7 @@ for time in range(len(times)):
 			for ax in range(2, 3):  
 				p255 = ProjectionPlot(pf, ax, ("index", "z_elevation"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density"), fontsize=9)
 				p255.set_zlim(("index", "z_elevation"), -1000, 1000)
+				p255.set_cmap(("index", "z_elevation"), 'algae')
 				plot255 = p255.plots[("index", "z_elevation")]
 				
 				plot255.figure = fig_elevation_map[time]
@@ -656,6 +674,7 @@ for time in range(len(times)):
 			for ax in range(1, 3):  
 				p26 = ProjectionPlot(pf, ax, ("gas", "metallicity"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = ("gas", "density_squared"), fontsize=9)
 				p26.set_zlim(("gas", "metallicity"), 0.005, 0.05)			
+				p26.set_cmap(("gas", "metallicity"), 'algae')			
 				plot26 = p26.plots[("gas", "metallicity")]
 
 				plot26.figure = fig_metal_map[time]
@@ -673,6 +692,7 @@ for time in range(len(times)):
 				p27 = ParticleProjectionPlot(pf, ax, (PartType_Star_to_use, "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
 				p27.set_unit((PartType_Star_to_use, "particle_mass"), 'Msun')
 				p27.set_zlim((PartType_Star_to_use, "particle_mass"), 1e4, 1e7)
+				p27.set_cmap((PartType_Star_to_use, "particle_mass"), 'algae')
 				p27.set_buff_size(400) # default is 800
 				p27.set_colorbar_label((PartType_Star_to_use, "particle_mass"), "Stellar Mass Per Pixel ($\mathrm{M}_{\odot}$)")
 				plot27 = p27.plots[(PartType_Star_to_use, "particle_mass")]
@@ -691,6 +711,62 @@ for time in range(len(times)):
 				at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
 				grid_star_map[time][code].axes.add_artist(at)
 
+		# STELLAR CLUMP STATISTICS AND ANNOTATED STELLAR MAPS
+		if draw_star_clump_stats >= 1 and time != 0:
+			# For make yt's HaloCatalog to work with non-cosmological dataset, a fix needed to be applied to analysis_modules/halo_finding/halo_objects.py,
+			pf.hubble_constant = 0.71; pf.omega_lambda = 0.73; pf.omega_matter = 0.27; pf.omega_curvature = 0.0; pf.current_redshift = 0.0 # another trick to make HaloCatalog work especially for ART-I dataset
+# 			if os.path.exists("./halo_catalogs/hop_%s_%05d/hop_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time])) == False:
+#  				hc = HaloCatalog(data_ds=pf, finder_method='hop', output_dir="./halo_catalogs/hop_%s_%05d" % (codes[code], times[time]), \
+#  							 finder_kwargs={'threshold': 2e5, 'dm_only': False, 'ptype': "all"})
+# #							 finder_kwargs={'threshold': 2e7, 'dm_only': False, 'ptype': PartType_Star_to_use})
+#  				hc.create()
+#  			else:
+#  				halo_ds = load("./halo_catalogs/hop_%s_%05d/hop_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time]))
+#  				hc = HaloCatalog(halos_ds=halo_ds, output_dir="./halo_catalogs/hop_%s_%05d" % (codes[code], times[time]))
+#  				hc.load()
+
+			if os.path.exists("./halo_catalogs/fof_%s_%05d/fof_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time])) == False:
+			 	hc = HaloCatalog(data_ds=pf, finder_method='fof', output_dir="./halo_catalogs/fof_%s_%05d" % (codes[code], times[time]), \
+			 				 finder_kwargs={'link': 0.003, 'dm_only': False, 'ptype': PartType_Star_to_use})
+#  							 finder_kwargs={'link': 0.02, 'dm_only': False, 'ptype': "all"})
+			 	hc.create()
+			else:
+			 	halo_ds = load("./halo_catalogs/fof_%s_%05d/fof_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time]))
+			 	hc = HaloCatalog(halos_ds=halo_ds, output_dir="./halo_catalogs/fof_%s_%05d" % (codes[code], times[time]))
+			 	hc.load()
+
+			halo_ad = hc.halos_ds.all_data()	
+			star_clump_masses[time].append(np.log10(halo_ad['particle_mass'][:].in_units("Msun")))
+
+			# Add additional star_map with annotated clumps if requested
+			if draw_star_clump_stats == 2:
+				for ax in range(1, 3):  
+					p271 = ParticleProjectionPlot(pf, ax, ("all", "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
+					p271.set_unit(("all", "particle_mass"), 'Msun')
+					p271.set_zlim(("all", "particle_mass"), 1e4, 1e9)
+					p271.set_cmap(("all", "particle_mass"), 'algae')
+					p271.set_buff_size(400) # default is 800
+					p271.set_colorbar_label(("all", "particle_mass"), "Mass Per Pixel ($\mathrm{M}_{\odot}$)")
+					plot271 = p271.plots[("all", "particle_mass")]
+					# p271 = ParticleProjectionPlot(pf, ax, (PartType_Star_to_use, "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
+					# p271.set_unit((PartType_Star_to_use, "particle_mass"), 'Msun')
+					# p271.set_zlim((PartType_Star_to_use, "particle_mass"), 1e4, 1e7)
+					# p271.set_cmap((PartType_Star_to_use, "particle_mass"), 'algae')
+					# p271.set_buff_size(400) # default is 800
+					# p271.set_colorbar_label((PartType_Star_to_use, "particle_mass"), "Stellar Mass Per Pixel ($\mathrm{M}_{\odot}$)")
+					# plot271 = p271.plots[(PartType_Star_to_use, "particle_mass")]
+					if ax == 2:
+						p271.annotate_halos(hc, factor=1.0, circle_args={'linewidth':0.8, 'alpha':0.8, 'facecolor':'none', 'edgecolor':'k'})#, annotate_field='particle_mass') 
+
+					plot271.figure = fig_star_map_2[time]
+					plot271.axes = grid_star_map_2[time][(ax-1)*len(codes)+code].axes
+					if code == 0: plot271.cax = grid_star_map_2[time].cbar_axes[0]
+					p271._setup_plots()
+
+				if add_nametag == 1:
+					at = AnchoredText("%s" % codes[code], loc=2, prop=dict(size=6), frameon=True)
+					grid_star_map_2[time][code].axes.add_artist(at)
+
 		# DENSITY-TEMPERATURE PDF
 		if draw_PDF == 1:
 			sp = pf.sphere(center, (0.5*figure_width, "kpc"))
@@ -698,12 +774,14 @@ for time in range(len(times)):
 				p3 = PhasePlot(sp, ("gas", "density"), ("gas", "temperature"), ("gas", "cell_mass"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
 				p3.set_unit("cell_mass", 'Msun')
 				p3.set_zlim(("gas", "cell_mass"), 1e3, 1e8)
+				p3.set_cmap(("gas", "cell_mass"), 'algae')
 				p3.set_colorbar_label(("gas", "cell_mass"), "Mass ($\mathrm{M}_{\odot}$)")
 				plot3 = p3.plots[("gas", "cell_mass")]
 			else:
 				# Because ParticlePhasePlot doesn't yet work for a log-log PDF for some reason, I will do the following trick.  
 				p3 = PhasePlot(sp, (PartType_Gas_to_use, "Density_2"), (PartType_Gas_to_use, "Temperature_2"), (PartType_Gas_to_use, "Mass_2"), weight_field=None, fontsize=12, x_bins=500, y_bins=500)
 				p3.set_zlim((PartType_Gas_to_use, "Mass_2"), 1e3, 1e8)
+				p3.set_cmap((PartType_Gas_to_use, "Mass_2"), 'algae')
 				plot3 = p3.plots[(PartType_Gas_to_use, "Mass_2")]
 
 			p3.set_xlim(1e-29, 1e-21)
@@ -731,17 +809,20 @@ for time in range(len(times)):
 				p4.set_unit("cylindrical_tangential_velocity", 'km/s')
 				p4.set_unit("cell_mass", 'Msun')
 				p4.set_zlim(("gas", "cell_mass"), 1e3, 1e8)
+				p4.set_cmap(("gas", "cell_mass"), 'algae')
 				p4.set_colorbar_label(("gas", "cell_mass"), "Mass ($\mathrm{M}_{\odot}$)")
 				plot4 = p4.plots[("gas", "cell_mass")]
 			else:
 				pf.field_info[(PartType_Gas_to_use, "particle_position_cylindrical_radius")].take_log = False
 				pf.field_info[(PartType_Gas_to_use, "particle_velocity_cylindrical_theta")].take_log = False
 				p4 = ParticlePhasePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_velocity_cylindrical_theta"), \
+
 							       (PartType_Gas_to_use, MassType_to_use), weight_field=None, fontsize=12, x_bins=300, y_bins=300)
 				p4.set_unit("particle_position_cylindrical_radius", 'kpc')
 				p4.set_unit("particle_velocity_cylindrical_theta", 'km/s')
 				p4.set_unit(MassType_to_use, 'Msun')
 				p4.set_zlim((PartType_Gas_to_use, MassType_to_use), 1e3, 1e8)
+				p4.set_cmap((PartType_Gas_to_use, MassType_to_use), 'algae')
 				p4.set_colorbar_label((PartType_Gas_to_use, MassType_to_use), "Mass ($\mathrm{M}_{\odot}$)")
 				plot4 = p4.plots[(PartType_Gas_to_use, MassType_to_use)]
 
@@ -871,6 +952,7 @@ for time in range(len(times)):
 			p41.set_unit("particle_mass", 'Msun') # requires a change in set_unit in visualization/profile_plotter.py: remove self.plots[field].zmin, self.plots[field].zmax = (None, None) 
 #			p41.set_unit((PartType_Star_to_use, "particle_mass"), 'Msun') # Neither this nor above works without such change
 			p41.set_zlim((PartType_Star_to_use, "particle_mass"), 1e3, 1e7)
+			p41.set_cmap((PartType_Star_to_use, "particle_mass"), 'algae')
 
 			p41.set_colorbar_label((PartType_Star_to_use, "particle_mass"), "Newly Formed Stellar Mass ($\mathrm{M}_{\odot}$)")
 			plot41 = p41.plots[(PartType_Star_to_use, "particle_mass")]
@@ -946,6 +1028,7 @@ for time in range(len(times)):
 				if draw_rad_height_PDF == 1 or draw_rad_height_PDF == 2:
 					p55 = PhasePlot(sp, ("index", "cylindrical_r"), ("index", "cylindrical_z_abs"), ("gas", "density"), weight_field=("gas", "cell_mass"), fontsize=12, x_bins=200, y_bins=200)
 					p55.set_zlim(("gas", "density"), 1e-26, 1e-21)
+					p55.set_cmap(("gas", "density"), 'algae')
 					p55.set_log("cylindrical_r", False)
 					p55.set_log("cylindrical_z_abs", False)
 					p55.set_unit("cylindrical_r", 'kpc')
@@ -954,6 +1037,7 @@ for time in range(len(times)):
 				elif draw_rad_height_PDF == 3:
 					p55 = PhasePlot(sp, ("index", "cylindrical_r"), ("index", "cylindrical_z_abs"), ("gas", "density_minus_analytic"), weight_field=("gas", "cell_mass"), fontsize=12, x_bins=200, y_bins=200)
 					p55.set_zlim(("gas", "density_minus_analytic"), -1e-24, 1e-24)
+					p55.set_cmap(("gas", "density_minus_analytic"), 'algae')
 					p55.set_log("cylindrical_r", False)
 					p55.set_log("cylindrical_z_abs", False)
 					p55.set_unit("cylindrical_r", 'kpc')
@@ -964,6 +1048,7 @@ for time in range(len(times)):
 				if draw_rad_height_PDF == 1 or draw_rad_height_PDF == 2:
 					p55 = PhasePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_position_cylindrical_z_abs"), (PartType_Gas_to_use, "Density_2"), weight_field=(PartType_Gas_to_use, "Mass_2"), fontsize=12, x_bins=200, y_bins=200)
 					p55.set_zlim((PartType_Gas_to_use, "Density_2"), 1e-26, 1e-21)
+					p55.set_cmap((PartType_Gas_to_use, "Density_2"), 'algae')
 					p55.set_log("particle_position_cylindrical_radius", False)
 					p55.set_log("particle_position_cylindrical_z_abs", False)
 					p55.set_unit("particle_position_cylindrical_radius", 'kpc')
@@ -972,6 +1057,7 @@ for time in range(len(times)):
 				elif draw_rad_height_PDF == 3:
 					p55 = PhasePlot(sp, (PartType_Gas_to_use, "particle_position_cylindrical_radius"), (PartType_Gas_to_use, "particle_position_cylindrical_z_abs"), (PartType_Gas_to_use, "Density_2_minus_analytic"), weight_field=(PartType_Gas_to_use, "Mass_2"), fontsize=12, x_bins=200, y_bins=200)
 					p55.set_zlim((PartType_Gas_to_use, "Density_2_minus_analytic"), -1e-24, 1e-24)
+					p55.set_cmap((PartType_Gas_to_use, "Density_2_minus_analytic"), 'algae')
 					p55.set_log("particle_position_cylindrical_radius", False)
 					p55.set_log("particle_position_cylindrical_z_abs", False)
 					p55.set_unit("particle_position_cylindrical_radius", 'kpc')
@@ -1026,12 +1112,14 @@ for time in range(len(times)):
 			if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 				p3 = PhasePlot(sp, ("gas", "density"), ("gas", "temperature"), ("gas", "metallicity"), weight_field=("gas", "cell_mass"), fontsize=12, x_bins=500, y_bins=500)
 				p3.set_zlim(("gas", "metallicity"), 0.005, 0.05)
+				p3.set_cmap(("gas", "metallicity"), 'algae')
 				p3.set_colorbar_label(("gas", "metallicity"), "Metallicity (Mass-weighted average of mass fraction)")
 				plot3 = p3.plots[("gas", "metallicity")]
 			else:
 				# Because ParticlePhasePlot doesn't yet work for a log-log PDF for some reason, I will do the following trick.  
 				p3 = PhasePlot(sp, (PartType_Gas_to_use, "Density_2"), (PartType_Gas_to_use, "Temperature_2"), (PartType_Gas_to_use, "Metallicity_2"), weight_field=(PartType_Gas_to_use, "Mass_2"), fontsize=12, x_bins=500, y_bins=500)
 				p3.set_zlim((PartType_Gas_to_use, "Metallicity_2"), 0.005, 0.05)
+				p3.set_cmap((PartType_Gas_to_use, "Metallicity_2"), 'algae')
 				plot3 = p3.plots[(PartType_Gas_to_use, "Metallicity_2")]
 
 			p3.set_xlim(1e-29, 1e-21)
@@ -1188,6 +1276,34 @@ for time in range(len(times)):
 		fig_metal_map[time].savefig("Metal_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_star_map == 1 and time != 0:
 		fig_star_map[time].savefig("Star_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+	if draw_star_clump_stats >= 1 and time != 0:
+		if draw_star_clump_stats == 2:
+			fig_star_map_2[time].savefig("Star_with_clumps_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)		
+		for star_clump_stats_i in range(2):
+			codes_plotted = []
+			plt.clf()
+			plt.subplot(111, aspect=0.3)
+			for code in range(len(codes)):
+				if (star_clump_stats_i == 0 and (codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO" or codes[code] == "RAMSES")) or \
+				   (star_clump_stats_i == 1 and (codes[code] == "CHANGA" or codes[code] == "GADGET-3" or codes[code] == "GASOLINE" or codes[code] == "GEAR" or codes[code] == "GIZMO")):
+					hist = np.histogram(star_clump_masses[time][code], bins=12, range=(6., 12.))
+#					hist = np.histogram(star_clump_masses[time][code], bins=8, range=(6., 10.))
+					dbin = 0.5*(hist[1][1] - hist[1][0])
+					lines = plt.plot(hist[1][:-1]+dbin, hist[0], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], marker=marker_names[code], linewidth=2.0, alpha=0.7)
+					codes_plotted.append(codes[code])
+			                # plt.plot(star_clump_masses[time][code], histtype='step', normed=0, bins=8, range=(6., 10.), color=color_names[code], linewidth=3.0, alpha=0.6)
+			plt.xlim(6, 12)
+			# plt.xlim(6, 10)
+			plt.ylim(-0.1, 12)
+			plt.xlabel("$\mathrm{Newly\ Formed\ Stellar\ Clump\ Mass\ (M_{\odot})}$")
+			plt.ylabel("$\mathrm{Stellar\ Clump\ Counts}$")
+			plt.grid(True)
+			plt.legend(codes_plotted, loc=1, frameon=True)
+			leg = plt.gca().get_legend()
+			ltext = leg.get_texts()
+			plt.setp(ltext, fontsize='medium')
+			plt.savefig("star_clump_stats_%d_%dMyr" % (star_clump_stats_i+1, times[time]), bbox_inches='tight', pad_inches=0.03, dpi=300)
+			plt.clf()
 	if draw_PDF == 1:
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_pos_vel_PDF >= 1:
