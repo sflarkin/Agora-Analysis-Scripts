@@ -713,27 +713,29 @@ for time in range(len(times)):
 
 		# STELLAR CLUMP STATISTICS AND ANNOTATED STELLAR MAPS
 		if draw_star_clump_stats >= 1 and time != 0:
-			# For make yt's HaloCatalog to work with non-cosmological dataset, a fix needed to be applied to analysis_modules/halo_finding/halo_objects.py,
+			# For make yt's HaloCatalog to work with non-cosmological dataset, a fix needed to be applied to analysis_modules/halo_finding/halo_objects.py: self.period = ds.arr([3.254, 3.254, 3.254], 'Mpc')
 			pf.hubble_constant = 0.71; pf.omega_lambda = 0.73; pf.omega_matter = 0.27; pf.omega_curvature = 0.0; pf.current_redshift = 0.0 # another trick to make HaloCatalog work especially for ART-I dataset
 # 			if os.path.exists("./halo_catalogs/hop_%s_%05d/hop_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time])) == False:
 #  				hc = HaloCatalog(data_ds=pf, finder_method='hop', output_dir="./halo_catalogs/hop_%s_%05d" % (codes[code], times[time]), \
 #  							 finder_kwargs={'threshold': 2e5, 'dm_only': False, 'ptype': "all"})
-# #							 finder_kwargs={'threshold': 2e7, 'dm_only': False, 'ptype': PartType_Star_to_use})
+# #							 finder_kwargs={'threshold': 3e8, 'dm_only': False, 'ptype': PartType_Star_to_use})
+#				hc.add_filter('quantity_value', 'particle_mass', '>', 2.6e6, 'Msun') # more than 30 particles 
 #  				hc.create()
-#  			else:
-#  				halo_ds = load("./halo_catalogs/hop_%s_%05d/hop_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time]))
-#  				hc = HaloCatalog(halos_ds=halo_ds, output_dir="./halo_catalogs/hop_%s_%05d" % (codes[code], times[time]))
-#  				hc.load()
+#  			
+#			halo_ds = load("./halo_catalogs/hop_%s_%05d/hop_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time]))
+#			hc = HaloCatalog(halos_ds=halo_ds, output_dir="./halo_catalogs/hop_%s_%05d" % (codes[code], times[time]))
+#			hc.load()
 
 			if os.path.exists("./halo_catalogs/fof_%s_%05d/fof_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time])) == False:
 			 	hc = HaloCatalog(data_ds=pf, finder_method='fof', output_dir="./halo_catalogs/fof_%s_%05d" % (codes[code], times[time]), \
-			 				 finder_kwargs={'link': 0.003, 'dm_only': False, 'ptype': PartType_Star_to_use})
+			 				 finder_kwargs={'link': 0.0025, 'dm_only': False, 'ptype': PartType_Star_to_use})
 #  							 finder_kwargs={'link': 0.02, 'dm_only': False, 'ptype': "all"})
+				hc.add_filter('quantity_value', 'particle_mass', '>', 2.6e6, 'Msun') # more than 30 particles
 			 	hc.create()
-			else:
-			 	halo_ds = load("./halo_catalogs/fof_%s_%05d/fof_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time]))
-			 	hc = HaloCatalog(halos_ds=halo_ds, output_dir="./halo_catalogs/fof_%s_%05d" % (codes[code], times[time]))
-			 	hc.load()
+
+			halo_ds = load("./halo_catalogs/fof_%s_%05d/fof_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time]))
+			hc = HaloCatalog(halos_ds=halo_ds, output_dir="./halo_catalogs/fof_%s_%05d" % (codes[code], times[time]))
+			hc.load()
 
 			halo_ad = hc.halos_ds.all_data()	
 			star_clump_masses[time].append(np.log10(halo_ad['particle_mass'][:].in_units("Msun")))
@@ -741,20 +743,20 @@ for time in range(len(times)):
 			# Add additional star_map with annotated clumps if requested
 			if draw_star_clump_stats == 2:
 				for ax in range(1, 3):  
-					p271 = ParticleProjectionPlot(pf, ax, ("all", "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
-					p271.set_unit(("all", "particle_mass"), 'Msun')
-					p271.set_zlim(("all", "particle_mass"), 1e4, 1e9)
-					p271.set_cmap(("all", "particle_mass"), 'algae')
+					p271 = ParticleProjectionPlot(pf, ax, (PartType_Star_to_use, "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
+					p271.set_unit((PartType_Star_to_use, "particle_mass"), 'Msun')
+					p271.set_zlim((PartType_Star_to_use, "particle_mass"), 1e4, 1e7)
+					p271.set_cmap((PartType_Star_to_use, "particle_mass"), 'algae')
 					p271.set_buff_size(400) # default is 800
-					p271.set_colorbar_label(("all", "particle_mass"), "Mass Per Pixel ($\mathrm{M}_{\odot}$)")
-					plot271 = p271.plots[("all", "particle_mass")]
-					# p271 = ParticleProjectionPlot(pf, ax, (PartType_Star_to_use, "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
-					# p271.set_unit((PartType_Star_to_use, "particle_mass"), 'Msun')
-					# p271.set_zlim((PartType_Star_to_use, "particle_mass"), 1e4, 1e7)
-					# p271.set_cmap((PartType_Star_to_use, "particle_mass"), 'algae')
+					p271.set_colorbar_label((PartType_Star_to_use, "particle_mass"), "Stellar Mass Per Pixel ($\mathrm{M}_{\odot}$)")
+					plot271 = p271.plots[(PartType_Star_to_use, "particle_mass")]
+					# p271 = ParticleProjectionPlot(pf, ax, ("all", "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
+					# p271.set_unit(("all", "particle_mass"), 'Msun')
+					# p271.set_zlim(("all", "particle_mass"), 1e4, 1e9)
+					# p271.set_cmap(("all", "particle_mass"), 'algae')
 					# p271.set_buff_size(400) # default is 800
-					# p271.set_colorbar_label((PartType_Star_to_use, "particle_mass"), "Stellar Mass Per Pixel ($\mathrm{M}_{\odot}$)")
-					# plot271 = p271.plots[(PartType_Star_to_use, "particle_mass")]
+					# p271.set_colorbar_label(("all", "particle_mass"), "Mass Per Pixel ($\mathrm{M}_{\odot}$)")
+					# plot271 = p271.plots[("all", "particle_mass")]
 					if ax == 2:
 						p271.annotate_halos(hc, factor=1.0, circle_args={'linewidth':0.8, 'alpha':0.8, 'facecolor':'none', 'edgecolor':'k'})#, annotate_field='particle_mass') 
 
@@ -1286,15 +1288,13 @@ for time in range(len(times)):
 			for code in range(len(codes)):
 				if (star_clump_stats_i == 0 and (codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO" or codes[code] == "RAMSES")) or \
 				   (star_clump_stats_i == 1 and (codes[code] == "CHANGA" or codes[code] == "GADGET-3" or codes[code] == "GASOLINE" or codes[code] == "GEAR" or codes[code] == "GIZMO")):
-					hist = np.histogram(star_clump_masses[time][code], bins=12, range=(6., 12.))
-#					hist = np.histogram(star_clump_masses[time][code], bins=8, range=(6., 10.))
+					hist = np.histogram(star_clump_masses[time][code], bins=8, range=(6., 10.))
 					dbin = 0.5*(hist[1][1] - hist[1][0])
 					lines = plt.plot(hist[1][:-1]+dbin, hist[0], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], marker=marker_names[code], linewidth=2.0, alpha=0.7)
 					codes_plotted.append(codes[code])
 			                # plt.plot(star_clump_masses[time][code], histtype='step', normed=0, bins=8, range=(6., 10.), color=color_names[code], linewidth=3.0, alpha=0.6)
-			plt.xlim(6, 12)
-			# plt.xlim(6, 10)
-			plt.ylim(-0.1, 12)
+			plt.xlim(6, 10)
+			plt.ylim(-0.1, 16)
 			plt.xlabel("$\mathrm{Newly\ Formed\ Stellar\ Clump\ Mass\ (M_{\odot})}$")
 			plt.ylabel("$\mathrm{Stellar\ Clump\ Counts}$")
 			plt.grid(True)
