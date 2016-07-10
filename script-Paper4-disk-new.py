@@ -718,7 +718,7 @@ for time in range(len(times)):
 # 			if os.path.exists("./halo_catalogs/hop_%s_%05d/hop_%s_%05d.0.h5" % (codes[code], times[time], codes[code], times[time])) == False:
 #  				hc = HaloCatalog(data_ds=pf, finder_method='hop', output_dir="./halo_catalogs/hop_%s_%05d" % (codes[code], times[time]), \
 #  							 finder_kwargs={'threshold': 2e5, 'dm_only': False, 'ptype': "all"})
-# #							 finder_kwargs={'threshold': 3e8, 'dm_only': False, 'ptype': PartType_Star_to_use})
+# #							 finder_kwargs={'threshold': 2e8, 'dm_only': False, 'ptype': PartType_Star_to_use})
 #				hc.add_filter('quantity_value', 'particle_mass', '>', 2.6e6, 'Msun') # more than 30 particles 
 #  				hc.create()
 #  			
@@ -1281,13 +1281,13 @@ for time in range(len(times)):
 	if draw_star_clump_stats >= 1 and time != 0:
 		if draw_star_clump_stats == 2:
 			fig_star_map_2[time].savefig("Star_with_clumps_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)		
-		for star_clump_stats_i in range(2):
+		plt.clf()
+		for star_clump_stats_i in range(1,3,1):
 			codes_plotted = []
-			plt.clf()
-			plt.subplot(111, aspect=0.3)
+			plt.subplot(1,2,star_clump_stats_i, aspect=0.3)
 			for code in range(len(codes)):
-				if (star_clump_stats_i == 0 and (codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO" or codes[code] == "RAMSES")) or \
-				   (star_clump_stats_i == 1 and (codes[code] == "CHANGA" or codes[code] == "GADGET-3" or codes[code] == "GASOLINE" or codes[code] == "GEAR" or codes[code] == "GIZMO")):
+				if (star_clump_stats_i == 1 and (codes[code] == "ART-I" or codes[code] == "ART-II"  or codes[code] == "CHANGA" or codes[code] == "ENZO")) or \
+				   (star_clump_stats_i == 2 and (codes[code] == "GADGET-3" or codes[code] == "GASOLINE" or codes[code] == "GEAR" or codes[code] == "GIZMO" or codes[code] == "RAMSES")):
 					hist = np.histogram(star_clump_masses[time][code], bins=8, range=(6., 10.))
 					dbin = 0.5*(hist[1][1] - hist[1][0])
 					lines = plt.plot(hist[1][:-1]+dbin, hist[0], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], marker=marker_names[code], linewidth=2.0, alpha=0.7)
@@ -1296,14 +1296,15 @@ for time in range(len(times)):
 			plt.xlim(6, 10)
 			plt.ylim(-0.1, 16)
 			plt.xlabel("$\mathrm{Newly\ Formed\ Stellar\ Clump\ Mass\ (M_{\odot})}$")
-			plt.ylabel("$\mathrm{Stellar\ Clump\ Counts}$")
+			if star_clump_stats_i == 1: 
+				plt.ylabel("$\mathrm{Stellar\ Clump\ Counts}$")
 			plt.grid(True)
 			plt.legend(codes_plotted, loc=1, frameon=True)
 			leg = plt.gca().get_legend()
 			ltext = leg.get_texts()
 			plt.setp(ltext, fontsize='medium')
-			plt.savefig("star_clump_stats_%d_%dMyr" % (star_clump_stats_i+1, times[time]), bbox_inches='tight', pad_inches=0.03, dpi=300)
-			plt.clf()
+		plt.savefig("star_clump_stats_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
+		plt.clf()
 	if draw_PDF == 1:
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_pos_vel_PDF >= 1:
