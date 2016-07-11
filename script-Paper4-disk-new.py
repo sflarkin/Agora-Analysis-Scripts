@@ -369,8 +369,8 @@ for time in range(len(times)):
 			PartType_StarBeforeFiltered_to_use = "stars"
 			FormationTimeType_to_use = "particle_creation_time"
 			def Stars(pfilter, data): 
-			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) # for this to work, you need a fix in frontends/art/io.py
-#			 	return ((data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) & (data[(pfilter.filtered_type, "particle_index")] >= 212500)) # without the fix metioned above, the line won't work because all "stars"="specie1" have the same wrong particle_creation_time of 6.851 Gyr; so you will have to use this quick and dirty patch
+			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) # for this to work, you need a fix in frontends/art/io.py, also ('>f', 'particle_metallicity1') needs to be removed in frontends/art/definitions.py:star_struct because Daniel turned off SNIa in 07/2016
+#			 	return ((data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) & (data[(pfilter.filtered_type, "particle_index")] >= 212500)) # without the fix metioned above, the above line won't work because all "stars"="specie1" have the same wrong particle_creation_time of 6.851 Gyr; so you will have to use this quick and dirty patch
 			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type=PartType_StarBeforeFiltered_to_use, requires=[FormationTimeType_to_use, "particle_index"])
 			pf.add_particle_filter(PartType_Star_to_use)
 		elif codes[code] == 'ART-II': 
