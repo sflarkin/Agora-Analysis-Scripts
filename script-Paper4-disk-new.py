@@ -369,7 +369,7 @@ for time in range(len(times)):
 			PartType_StarBeforeFiltered_to_use = "stars"
 			FormationTimeType_to_use = "particle_creation_time"
 			def Stars(pfilter, data): 
-			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) # for this to work, you need a fix in frontends/art/io.py, also ('>f', 'particle_metallicity1') needs to be removed in frontends/art/definitions.py:star_struct because Daniel turned off SNIa in 07/2016
+			 	return (data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) 
 #			 	return ((data[(pfilter.filtered_type, FormationTimeType_to_use)] > 0) & (data[(pfilter.filtered_type, "particle_index")] >= 212500)) # without the fix metioned above, the above line won't work because all "stars"="specie1" have the same wrong particle_creation_time of 6.851 Gyr; so you will have to use this quick and dirty patch
 			add_particle_filter(PartType_Star_to_use, function=Stars, filtered_type=PartType_StarBeforeFiltered_to_use, requires=[FormationTimeType_to_use, "particle_index"])
 			pf.add_particle_filter(PartType_Star_to_use)
@@ -494,10 +494,13 @@ for time in range(len(times)):
 				pf.add_field(("gas", "temperature"), function=_temperature_3, force_override=True, units="K")
 
 		# ADDITIONAL FIELDS IV: METALLICITY (IN MASS FRACTION, NOT IN ZSUN)
-                if codes[code] == 'ART-I' or codes[code] == 'ART-II': # metallicity field in ART-I has a different meaning (see frontends/art/fields.py), and metallicity field in ART-II is missing
+                if codes[code] == 'ART-I': # metallicity field in ART-I has a different meaning (see frontends/art/fields.py), and metallicity field in ART-II is missing
+			def _metallicity_2(field, data):  
+                               return (data["gas", "metal_ii_density"] + data["gas", "metal_ia_density"]) / data["gas", "density"] # important for ART-I
+			pf.add_field(("gas", "metallicity"), function=_metallicity_2, force_override=True, display_name="Metallicity", take_log=True, units="") 
+                elif codes[code] == 'ART-II': 
 			def _metallicity_2(field, data):  
 				return data["gas", "metal_ii_density"] / data["gas", "density"]
-#                               return (data["gas", "metal_ii_density"] + data["gas", "metal_ia_density"]) / data["gas", "density"] # gives the same value as above in ART-I
 			pf.add_field(("gas", "metallicity"), function=_metallicity_2, force_override=True, display_name="Metallicity", take_log=True, units="") 
                 elif codes[code] == 'ENZO': # metallicity field in ENZO is in Zsun, so we create a new field
 			def _metallicity_2(field, data):  
@@ -1296,7 +1299,7 @@ for time in range(len(times)):
 			plt.ylim(-0.1, 18)
 			plt.xlabel("$\mathrm{Newly\ Formed\ Stellar\ Clump\ Mass\ (M_{\odot})}$")
 			if star_clump_stats_i == 1: 
-				plt.ylabel("$\mathrm{Stellar\ Clump\ Counts\ N_{clump}(M)}$")
+				plt.ylabel("$\mathrm{Stellar\ Clump\ Counts\\ N_{clump}(M)}$")
 			plt.grid(True)
 			plt.legend(codes_plotted, loc=1, frameon=True)
 			leg = plt.gca().get_legend()
@@ -1320,7 +1323,7 @@ for time in range(len(times)):
 			plt.ylim(-0.1, 30)
 			plt.xlabel("$\mathrm{Newly\ Formed\ Stellar\ Clump\ Mass\ (M_{\odot})}$")
 			if star_clump_stats_i == 1: 
-				plt.ylabel("$\mathrm{Cumulative Stellar\ Clump\ Counts\ N_{clump}(>M)}}$")
+				plt.ylabel("$\mathrm{Cumulative\ Stellar\ Clump\ Counts\\ N_{clump}(>M)}}$")
 			plt.grid(True)
 			plt.legend(codes_plotted, loc=1, frameon=True)
 			leg = plt.gca().get_legend()
