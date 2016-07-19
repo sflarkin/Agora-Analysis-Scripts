@@ -39,7 +39,7 @@ codes = ['ART-I', 'ART-II', 'CHANGA', 'ENZO', 'GADGET-3', 'GASOLINE', 'GEAR', 'G
 # 	     [file_location+'CHANGA/disklow/disklow.000000', file_location+'CHANGA/disklow/disklow.000500'],
 # 	     [file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0100/DD0100'],
 # 	     [file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_000.hdf5', file_location+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_010.hdf5'],
-# 	     [file_location+'GASOLINE/LOW_nosf_nofb_gasoline_pfloor_jeanssoft_0myr.00001', file_location+'GASOLINE/LOW_dataset1.00335'],
+# 	     [file_location+'GASOLINE/LOW_dataset1.00001', file_location+'GASOLINE/LOW_dataset1.00335'],
 # 	     [file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500'],
 # 	     [file_location+'GIZMO/snapshot_temp_000', file_location+'GIZMO/snapshot_temp_100'],
 # 	     [file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00068/info_00068.txt']]
@@ -48,7 +48,7 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 	     [file_location+'CHANGA/disklow/disklow.000000', file_location+'CHANGA/disklow/disklow.000500'],
 	     [file_location+'ENZO/DD0000/DD0000', file_location+'ENZO/DD0050/DD0050'],
  	     [file_location+'GADGET-3/snap_iso_sf_000.hdf5', file_location+'GADGET-3/snap_iso_sf_010.hdf5'],
-	     [file_location+'GASOLINE/LOW_dataset2_timezero.00001', file_location+'GASOLINE/LOW_dataset2.00335'],
+	     [file_location+'GASOLINE/LOW_dataset1.00001', file_location+'GASOLINE/LOW_dataset2.00335'],
   	     [file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500'],
 	     [file_location+'GIZMO/snapshot_temp_000', file_location+'GIZMO/snapshot_temp_100'],
  	     [file_location+'RAMSES/output_00001/info_00001.txt', file_location+'RAMSES/output_00216/info_00216.txt']]
@@ -64,7 +64,7 @@ filenames = [[file_location+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location+'ART-I/
 # codes = ['GADGET-3']
 # filenames = [[file_location+'GADGET-3/snap_iso_sf_000.hdf5', file_location+'GADGET-3/snap_iso_sf_010.hdf5']]
 # codes = ['GASOLINE']
-# filenames = [[file_location+'GASOLINE/LOW_dataset2_timezero.00001', file_location+'GASOLINE/LOW_dataset2.00335']]
+# filenames = [[file_location+'GASOLINE/LOW_dataset1.00001', file_location+'GASOLINE/LOW_dataset2.00335']]
 # codes = ['GEAR']
 # filenames = [[file_location+'GEAR/snapshot_0000', file_location+'GEAR/snapshot_0500']]
 # codes = ['GIZMO']
@@ -82,7 +82,7 @@ draw_density_map       = 1         # 0/1     = OFF/ON
 draw_temperature_map   = 1         # 0/1     = OFF/ON
 draw_cellsize_map      = 2         # 0/1/2   = OFF/ON/ON also with [M/rho]^(1/3) resolution definition for SPH
 draw_elevation_map     = 1         # 0/1     = OFF/ON
-draw_metal_map         = 1         # 0/1     = OFF/ON
+draw_metal_map         = 0         # 0/1     = OFF/ON
 draw_star_map          = 1         # 0/1     = OFF/ON
 draw_star_clump_stats  = 0         # 0/1/2   = OFF/ON/ON with additional star_map with annotated clumps
 draw_PDF               = 1         # 0/1     = OFF/ON
@@ -496,7 +496,7 @@ for time in range(len(times)):
 		# ADDITIONAL FIELDS IV: METALLICITY (IN MASS FRACTION, NOT IN ZSUN)
                 if codes[code] == 'ART-I': # metallicity field in ART-I has a different meaning (see frontends/art/fields.py), and metallicity field in ART-II is missing
 			def _metallicity_2(field, data):  
-                               return (data["gas", "metal_ii_density"] + data["gas", "metal_ia_density"]) / data["gas", "density"] # important for ART-I
+                               return (data["gas", "metal_ii_density"] + data["gas", "metal_ia_density"]) / data["gas", "density"] # metal_ia_density needs to be added to account for initial 0.5 Zsun, even though we don't have SNe Ia
 			pf.add_field(("gas", "metallicity"), function=_metallicity_2, force_override=True, display_name="Metallicity", take_log=True, units="") 
                 elif codes[code] == 'ART-II': 
 			def _metallicity_2(field, data):  
