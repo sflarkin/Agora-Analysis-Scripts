@@ -571,6 +571,9 @@ for time in range(len(times)):
 		cen3 = sp2.quantities.max_location(("gas", "density"))
 		center = pf.arr([cen3[1].d, cen3[2].d, cen3[3].d], 'code_length') # naive usage such as YTArray([cen3[1], cen3[2], cen3[3]]) doesn't work somehow for ART-II data
 		#center = pf.arr([cen3[2].d, cen3[3].d, cen3[4].d], 'code_length') # for yt-3.2.3 or before
+                if codes[code] == "GASOLINE" and time == 1:
+			#center = pf.arr([2.7912903206399826e+20, 1.5205303149849894e+21, 1.5398968883245956e+21], 'cm') # a temporary hack for GASOLINE (center of the most massive stellar clump) 
+			center = pf.arr([ 0.09045956,  0.49277032,  0.49904659], 'code_length')
                 if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 			proj_region = pf.box(center - YTArray([figure_width, figure_width, figure_width], 'kpc'),
 		 			     center + YTArray([figure_width, figure_width, figure_width], 'kpc')) # projected images made using a (2*figure_width)^3 box for AMR codes
@@ -742,6 +745,10 @@ for time in range(len(times)):
 
 			halo_ad = hc.halos_ds.all_data()	
 			star_clump_masses[time].append(np.log10(halo_ad['particle_mass'][:].in_units("Msun")))
+			# most_massive = halo_ad['particle_mass'].max().in_units('Msun')
+			# cen3 = [halo_ad['particle_position_x'][halo_ad['particle_mass'] == most_massive][0].in_units('code_length').d, 
+			# 	halo_ad['particle_position_y'][halo_ad['particle_mass'] == most_massive][0].in_units('code_length').d, 
+			# 	halo_ad['particle_position_z'][halo_ad['particle_mass'] == most_massive][0].in_units('code_length').d]
 
 			# Add additional star_map with annotated clumps if requested
 			if draw_star_clump_stats == 2:
