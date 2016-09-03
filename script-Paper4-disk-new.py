@@ -41,9 +41,9 @@ draw_elevation_map               = 0#1       # 0/1         = OFF/ON
 draw_metal_map                   = 0#1       # 0/1/2       = OFF/ON/ON with total metal mass in the simulation annotated (this will be inaccurate for SPH)
 draw_zvel_map                    = 0         # 0/1         = OFF/ON
 draw_star_map                    = 0#1       # 0/1         = OFF/ON
-draw_star_clump_stats            = 2#2       # 0/1/2       = OFF/ON/ON with additional star_map with annotated clumps
+draw_star_clump_stats            = 0#2       # 0/1/2       = OFF/ON/ON with additional star_map with annotated clumps
 draw_SFR_map                     = 0###2     # 0/1/2       = OFF/ON/ON with local K-S plot using patches
-draw_PDF                         = 0###3     # 0/1/2/3     = OFF/ON/ON with constant pressure/entropy lines/ON with additional annotations such as 1D profile from a specific code (ENZO)
+draw_PDF                         = 3###3     # 0/1/2/3     = OFF/ON/ON with constant pressure/entropy lines/ON with additional annotations such as 1D profile from a specific code (ENZO)
 draw_pos_vel_PDF                 = 0##4      # 0/1/2/3/4   = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile/ON also with separate 1D vertical dispersion profiles
 draw_star_pos_vel_PDF            = 0##4      # 0/1/2/3/4   = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile/ON also with separate 1D vertical dispersion profiles
 draw_rad_height_PDF              = 0##2      # 0/1/2/3     = OFF/ON/ON with 1D profile/ON with analytic ftn subtracted
@@ -1808,23 +1808,39 @@ for time in range(len(times)):
 			plt.clf()
 	if draw_PDF >= 1:
 		if draw_PDF == 3 and time != 0:
-			# If requested, find a 1D profile line from a specific snapshot (in this case ENZO noSF run at 500 Myr), then we add it to all panels
-			pf_profile_enzo = load_dataset(1, 1, 0, ['ENZO'], [['dummy', file_location[0]+'ENZO/DD0100/DD0100']])
-			v, cen = pf_profile_enzo.h.find_max(("gas", "density"))
-			sp = pf_profile_enzo.sphere(cen, (30.0, "kpc")) 
+			# If requested, find a 1D profile line from a specific snapshot as a reference (in this case ENZO or CHANGA noSF run at 500 Myr), then we add it to all panels
+			# pf_profile_ref = load_dataset(1, 1, 0, ['ENZO'], [['dummy', file_location[0]+'ENZO/DD0100/DD0100']])
+			pf_profile_ref = load_dataset(1, 1, 0, ['CHANGA'], [['dummy', file_location[0]+'CHANGA/disklow/disklow.000500']])
+			def _Density_2(field, data):
+				return data[(PartType_Gas_to_use, "Density")].in_units('g/cm**3')
+			pf_profile_ref.add_field((PartType_Gas_to_use, "Density_2"), function=_Density_2, take_log=True, particle_type=False, display_name="Density", units="g/cm**3") 
+			def _Temperature_2(field, data):
+				return data[(PartType_Gas_to_use, "Temperature")].in_units('K')
+			pf_profile_ref.add_field((PartType_Gas_to_use, "Temperature_2"), function=_Temperature_2, take_log=True, particle_type=False, display_name="Temperature", units="K") 
+			def _Mass_2(field, data):
+				return data[(PartType_Gas_to_use, MassType_to_use)].in_units('Msun')
+			pf_profile_ref.add_field((PartType_Gas_to_use, "Mass_2"), function=_Mass_2, take_log=True, particle_type=False, display_name="Mass", units="Msun")				
+
+			v, cen = pf_profile_ref.h.find_max(("gas", "density"))
+			sp = pf_profile_ref.sphere(cen, (30.0, "kpc")) 
 			cen2 = sp.quantities.center_of_mass(use_gas=True, use_particles=False).in_units("kpc")
-			sp2 = pf_profile_enzo.sphere(cen2, (1.0, "kpc"))
+			sp2 = pf_profile_ref.sphere(cen2, (1.0, "kpc"))
 			cen3 = sp2.quantities.max_location(("gas", "density"))
-			center_profile_enzo = pf_profile_enzo.arr([cen3[1].d, cen3[2].d, cen3[3].d], 'code_length')
+			center_profile_ref = pf_profile_ref.arr([cen3[1].d, cen3[2].d, cen3[3].d], 'code_length')
 			if yt_version_pre_3_2_3 == 1:
-				center_profile_enzo = pf_profile_enzo.arr([cen3[2].d, cen3[3].d, cen3[4].d], 'code_length') 
-			sp_profile_enzo = pf_profile_enzo.sphere(center_profile_enzo, (0.5*figure_width, "kpc"))
-			p35 = ProfilePlot(sp_profile_enzo, ("gas", "density"),  ("gas", "temperature"), weight_field=("gas", "cell_mass"), n_bins=30) 
-			p35.set_xlim(1e-29, 1e-21)
-			p35.set_ylim("temperature", 10, 1e7)
+				center_profile_ref = pf_profile_ref.arr([cen3[2].d, cen3[3].d, cen3[4].d], 'code_length') 
+			sp_profile_ref = pf_profile_ref.sphere(center_profile_ref, (0.5*figure_width, "kpc"))
+
+			# p35 = ProfilePlot(sp_profile_ref, ("gas", "density"),  ("gas", "temperature"), weight_field=("gas", "cell_mass"), n_bins=30) 
+			# p35.set_xlim(1e-29, 1e-21)
+			# p35.set_ylim("temperature", 10, 1e7)
+			p35 = ProfilePlot(sp_profile_ref, (PartType_Gas_to_use, "Density_2"), (PartType_Gas_to_use, "Temperature_2"), weight_field=(PartType_Gas_to_use, "Mass_2"), n_bins=30)
+			p35.set_xlim(1e-26, 1e-21)
+			p35.set_ylim("Temperature_2", 10, 1e7)
 			for code in range(len(codes)):
-				line_profile_enzo = ln.Line2D(p35.profiles[0].x.in_units('g/cm**3'), p35.profiles[0]["temperature"].in_units('K'), linestyle="--", linewidth=2, color='k', alpha=0.7)
-				grid_PDF[time][code].axes.add_line(line_profile_enzo) 
+#				line_profile_ref = ln.Line2D(p35.profiles[0].x.in_units('g/cm**3'), p35.profiles[0]["temperature"].in_units('K'), linestyle="--", linewidth=2, color='k', alpha=0.7)
+				line_profile_ref = ln.Line2D(p35.profiles[0].x.in_units('g/cm**3'), p35.profiles[0]["Temperature_2"].in_units('K'), linestyle="--", linewidth=2, color='k', alpha=0.7)
+				grid_PDF[time][code].axes.add_line(line_profile_ref) 
 		fig_PDF[time].savefig("PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_pos_vel_PDF >= 1:
 		fig_pos_vel_PDF[time].savefig("pos_vel_PDF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
