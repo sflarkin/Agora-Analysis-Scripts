@@ -34,37 +34,42 @@ from scipy.stats import kde
 from subprocess import call
 mylog.setLevel(1)
 
-draw_density_map                 = 0#1       # 0/1         = OFF/ON
-draw_temperature_map             = 0#1       # 0/1         = OFF/ON
-draw_cellsize_map                = 0#3       # 0/1/2/3     = OFF/ON/ON now with resolution map where particle_size is defined as [M/rho]^(1/3) for SPH/ON with both cell_size and resolution maps
-draw_elevation_map               = 0#1       # 0/1         = OFF/ON
-draw_metal_map                   = 0#1       # 0/1/2       = OFF/ON/ON with total metal mass in the simulation annotated (this will be inaccurate for SPH)
-draw_zvel_map                    = 0         # 0/1         = OFF/ON
-draw_star_map                    = 0#1       # 0/1         = OFF/ON
-draw_star_clump_stats            = 0#2       # 0/1/2       = OFF/ON/ON with additional star_map with annotated clumps
-draw_SFR_map                     = 0###2     # 0/1/2       = OFF/ON/ON with local K-S plot using patches
-draw_PDF                         = 3###3     # 0/1/2/3     = OFF/ON/ON with constant pressure/entropy lines/ON with additional annotations such as 1D profile from a specific code (ENZO)
-draw_pos_vel_PDF                 = 0##4      # 0/1/2/3/4   = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile/ON also with separate 1D vertical dispersion profiles
-draw_star_pos_vel_PDF            = 0##4      # 0/1/2/3/4   = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile/ON also with separate 1D vertical dispersion profiles
-draw_rad_height_PDF              = 0##2      # 0/1/2/3     = OFF/ON/ON with 1D profile/ON with analytic ftn subtracted
-draw_metal_PDF                   = 0##1      # 0/1         = OFF/ON
-draw_density_DF                  = 0#2       # 0/1/2       = OFF/ON/ON with difference plot between 1st and 2nd datasets (when 2, dataset_num should be set to 2)
-draw_radius_DF                   = 0#1       # 0/1         = OFF/ON
-draw_star_radius_DF              = 0#2       # 0/1/2       = OFF/ON/ON with SFR profile and K-S plot (when 2, this automatically turns on draw_radius_DF)
-draw_height_DF                   = 0#1       # 0/1         = OFF/ON
-draw_SFR                         = 0#1       # 0/1         = OFF/ON
-draw_cut_through                 = 0         # 0/1         = OFF/ON
-add_nametag                      = 1         # 0/1         = OFF/ON
+draw_density_map                 = 0#1           # 0/1         = OFF/ON
+draw_temperature_map             = 0#1           # 0/1         = OFF/ON
+draw_cellsize_map                = 0#3           # 0/1/2/3     = OFF/ON/ON now with resolution map where particle_size is defined as [M/rho]^(1/3) for SPH/ON with both cell_size and resolution maps
+draw_elevation_map               = 0#1           # 0/1         = OFF/ON
+draw_metal_map                   = 0#1           # 0/1/2       = OFF/ON/ON with total metal mass in the simulation annotated (this will be inaccurate for SPH)
+draw_zvel_map                    = 0             # 0/1         = OFF/ON
+draw_star_map                    = 0#1           # 0/1         = OFF/ON
+draw_star_clump_stats            = 0#3           # 0/1/2/3     = OFF/ON/ON with additional star_map with annotated clumps/ON with addtional star_map + extra clump mass function with GIZMO-ps2
+draw_SFR_map                     = 0###2         # 0/1/2       = OFF/ON/ON with local K-S plot using patches
+draw_PDF                         = 0###3         # 0/1/2/3     = OFF/ON/ON with constant pressure/entropy lines/ON with additional annotations such as 1D profile from a specific code (CHANGA)
+draw_pos_vel_PDF                 = 0##4          # 0/1/2/3/4   = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile/ON also with separate 1D vertical dispersion profiles
+draw_star_pos_vel_PDF            = 0##4          # 0/1/2/3/4   = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile/ON also with separate 1D vertical dispersion profiles
+draw_rad_height_PDF              = 0##2          # 0/1/2/3     = OFF/ON/ON with 1D profile/ON with analytic ftn subtracted
+draw_metal_PDF                   = 0##1          # 0/1         = OFF/ON
+draw_density_DF                  = 2#2           # 0/1/2       = OFF/ON/ON with difference plot between 1st and 2nd datasets (when 2, dataset_num should be set to 2)
+draw_radius_DF                   = 0#1           # 0/1         = OFF/ON
+draw_star_radius_DF              = 0#2           # 0/1/2       = OFF/ON/ON with SFR profile and K-S plot (when 2, this automatically turns on draw_radius_DF)
+draw_height_DF                   = 0#1           # 0/1         = OFF/ON
+draw_SFR                         = 0#2           # 0/1/2       = OFF/ON/ON with extra line with GIZMO-ps2
+draw_cut_through                 = 0             # 0/1         = OFF/ON
+add_nametag                      = 1#1           # 0/1         = OFF/ON
+add_mean_fractional_dispersion   = 0#0           # 0/1         = OFF/ON
 
-dataset_num                      = 2         # 1/2         = 1st dataset(Grackle+noSF)/2nd dataset(Grackle+SF+ThermalFbck) for AGORA Paper 4 
-yt_version_pre_3_2_3             = 0         # 0/1         = NO/YES to "Is the yt version being used pre yt-dev-3.2.3?"
-times                            = [0, 500]  # in Myr
-figure_width                     = 30        # in kpc
-n_ref                            = 256       # for SPH codes
-over_refine_factor               = 1         # for SPH codes
-aperture_size_SFR_map            = 750       # in pc, 750 matches Bigiel et al. (2008)
-young_star_cutoff_SFR_map        = 20        # in Myr
-young_star_cutoff_star_radius_DF = 20        # in Myr
+dataset_num                      = 2             # 1/2         = 1st dataset(Grackle+noSF)/2nd dataset(Grackle+SF+ThermalFbck) for AGORA Paper 4 
+yt_version_pre_3_2_3             = 0             # 0/1         = NO/YES to "Is the yt version being used pre yt-dev-3.2.3?"
+times                            = [0, 500]      # in Myr
+figure_width                     = 30            # in kpc
+n_ref                            = 256           # for SPH codes
+over_refine_factor               = 1             # for SPH codes
+aperture_size_SFR_map            = 750           # in pc       = Used if draw_SFR_map = 1, 750 matches Bigiel et al. (2008)
+young_star_cutoff_SFR_map        = 20            # in Myr      = Used if draw_SFR_map = 1
+young_star_cutoff_star_radius_DF = 20            # in Myr      = Used if draw_star_radius_DF = 1
+mean_dispersion_radius_range     = [2, 10]       # in kpc      = Used if add_mean_fractional_dispersion = 1, for draw_pos_vel_PDF, draw_star_pos_vel_PDF, draw_rad_height_PDF, draw_radius_DF, draw_star_radius_DF
+mean_dispersion_height_range     = [0, 0.6]      # in kpc      = Used if add_mean_fractional_dispersion = 1, for draw_height_DF
+mean_dispersion_time_range       = [50, 500]     # in Myr      = Used if add_mean_fractional_dispersion = 1, for draw_SFR
+mean_dispersion_density_range    = [1e-25, 1e-22]# in g/cm3    = Used if add_mean_fractional_dispersion = 1, for draw_density_DF
 disk_normal_vector               = [0., 0., 1.]
 
 gadget_default_unit_base = {'UnitLength_in_cm'         : 3.08568e+21,
@@ -85,16 +90,20 @@ filenames = [[[file_location[0]+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location[0]+
 	      [file_location[0]+'RAMSES/output_00001/info_00001.txt', file_location[0]+'RAMSES/output_00068/info_00068.txt'],
 	      [file_location[0]+'CHANGA/disklow/disklow.000000', file_location[0]+'CHANGA/disklow/disklow.000500'], 
 	      [file_location[0]+'GASOLINE/LOW_dataset1.00001', file_location[0]+'GASOLINE/LOW_dataset1.00335'],
-	      [file_location[0]+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_000.hdf5', file_location[0]+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_010.hdf5'],
+	      [file_location[0]+'GADGET-3/AGORA_ISO_LOW_DRY/snap_iso_dry_000.hdf5', file_location[0]+'GADGET-3/AGORA_ISO_LOW_DRY/snap_iso_dry_010.hdf5'],
 	      [file_location[0]+'GEAR/snapshot_0000', file_location[0]+'GEAR/snapshot_0500'],
 	      [file_location[0]+'GIZMO/snapshot_temp_000', file_location[0]+'GIZMO/snapshot_temp_100']],
-	     [[file_location[1]+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location[1]+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d'],
+#	     [[file_location[1]+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location[1]+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d'],
+	     [['/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/ART-I/wrong_before_091216/IC/AGORA_Galaxy_LOW.d',
+	       '/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/ART-I/wrong_before_091216/t0.5Gyr/10MpcBox_csf512_02350.d'],
 	      [file_location[1]+'ART-II/SF_FBth_def_2p/OUT/AGORA_LOW_000000.art', file_location[1]+'ART-II/SF_FBth_def_2p/OUT/AGORA_LOW_000311.art'],
 	      [file_location[1]+'ENZO/DD0000/DD0000', file_location[1]+'ENZO/DD0050/DD0050'],
 	      [file_location[1]+'RAMSES/output_00001/info_00001.txt', file_location[1]+'RAMSES/output_00216/info_00216.txt'],
 	      [file_location[1]+'CHANGA/disklow/disklow.000000', file_location[1]+'CHANGA/disklow/disklow.000500'],
 	      [file_location[1]+'GASOLINE/LOW_dataset1.00001', file_location[1]+'GASOLINE/LOW_dataset2.00335'],
-	      [file_location[1]+'GADGET-3/snap_iso_sf_000.hdf5', file_location[1]+'GADGET-3/snap_iso_sf_010.hdf5'],
+#	      [file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_000.hdf5', file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_010.hdf5'],
+              ['/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/GADGET-3/wrong_before_090416/snap_iso_sf_000.hdf5',
+	       '/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/GADGET-3/wrong_before_090416/snap_iso_sf_010.hdf5'],
 	      [file_location[1]+'GEAR/snapshot_0000', file_location[1]+'GEAR/snapshot_0500'],
 	      [file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
 
@@ -117,19 +126,24 @@ filenames = [[[file_location[0]+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location[0]+
 # filenames = [[[file_location[0]+'GASOLINE/LOW_dataset1.00001', file_location[0]+'GASOLINE/LOW_dataset1.00335']],
 # 	     [[file_location[1]+'GASOLINE/LOW_dataset1.00001', file_location[1]+'GASOLINE/LOW_dataset2.00335']]]
 # codes = ['GADGET-3']
-# filenames = [[[file_location[0]+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_000.hdf5', file_location[0]+'GADGET-3/AGORA_ISO_LOW_ZSolar3/snap_iso_dry_010.hdf5']],
-# 	     [[file_location[1]+'GADGET-3/snap_iso_sf_000.hdf5', file_location[1]+'GADGET-3/snap_iso_sf_010.hdf5']]]
+# filenames = [[[file_location[0]+'GADGET-3/AGORA_ISO_LOW_DRY/snap_iso_dry_000.hdf5', file_location[0]+'GADGET-3/AGORA_ISO_LOW_DRY/snap_iso_dry_010.hdf5']],
+#  	     [[file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_000.hdf5', file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_010.hdf5']]]
 # codes = ['GEAR']
 # filenames = [[[file_location[0]+'GEAR/snapshot_0000', file_location[0]+'GEAR/snapshot_0500']],
 # 	     [[file_location[1]+'GEAR/snapshot_0000', file_location[1]+'GEAR/snapshot_0500']]]
 # codes = ['GIZMO']
 # filenames = [[[file_location[0]+'GIZMO/snapshot_temp_000', file_location[0]+'GIZMO/snapshot_temp_100']],
-# 	     [[file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
+#   	     [[file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
 # codes = ['ENZO', 'GIZMO']
 # filenames = [[[file_location[0]+'ENZO/DD0000/DD0000', file_location[0]+'ENZO/DD0100/DD0100'],
 # 	      [file_location[0]+'GIZMO/snapshot_temp_000', file_location[0]+'GIZMO/snapshot_temp_100']],
-# 	     [[file_location[1]+'ENZO/DD0000/DD0000', file_location[1]+'ENZO/DD0050/DD0050'],
-# 	      [file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
+#  	     [[file_location[1]+'ENZO/DD0000/DD0000', file_location[1]+'ENZO/DD0050/DD0050'],
+#  	      [file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
+# codes = ['GEAR', 'GIZMO']
+# filenames = [[[file_location[0]+'GEAR/snapshot_0000', file_location[0]+'GEAR/snapshot_0500'],
+# 	      [file_location[0]+'GIZMO/snapshot_temp_000', file_location[0]+'GIZMO/snapshot_temp_100']],
+#  	     [[file_location[1]+'GEAR/snapshot_0000', file_location[1]+'GEAR/snapshot_0500'],
+#  	      [file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
 
 def load_dataset(dataset_num, time, code, codes, filenames_entry):
 	if codes[code] == 'ART-I': # ART frontend doesn't find the accompanying files, so we specify them; see http://yt-project.org/docs/dev/examining/loading_data.html#art-data
@@ -246,6 +260,8 @@ grid_rad_height_PDF         = []
 grid_metal_PDF              = []
 star_clump_masses_hop       = []
 star_clump_masses_fof       = []
+star_clump_masses_hop_ref   = []
+star_clump_masses_fof_ref   = []
 pos_vel_xs                  = []
 pos_vel_profiles            = []
 pos_disp_xs                 = []
@@ -380,6 +396,9 @@ for time in range(len(times)):
 		density_DF_profiles.append([])
 		density_DF_1st_xs.append([])
 		density_DF_1st_profiles.append([])
+		if draw_density_DF == 2 and dataset_num == 1:
+			print "This won't work; resetting draw_density_DF to 1..."
+			draw_density_DF == 1
 	if draw_star_radius_DF >= 1:
 		star_radius_DF_xs.append([])
 		star_radius_DF_profiles.append([])		
@@ -397,7 +416,7 @@ for time in range(len(times)):
 		height_DF_xs.append([])
 		height_DF_profiles.append([])
 		height_surface_density.append([])
-	if draw_SFR == 1:
+	if draw_SFR >= 1:
 		sfr_ts.append([])
 		sfr_cum_masses.append([])
 		sfr_sfrs.append([])
@@ -657,6 +676,9 @@ for time in range(len(times)):
                 if codes[code] == "GASOLINE" and dataset_num == 2 and time == 1:
 			#center = pf.arr([2.7912903206399826e+20, 1.5205303149849894e+21, 1.5398968883245956e+21], 'cm') # a temporary hack for GASOLINE (center of the most massive stellar clump) 
 			center = pf.arr([ 0.09045956,  0.49277032,  0.49904659], 'code_length')
+                # if codes[code] == "GADGET-3" and dataset_num == 2 and time == 1:
+		# 	#center = pf.arr([6.184520935812296e+21, 4.972678132728082e+21, 6.559067311284074e+21], 'cm') # a temporary hack for GADGET-3 (center of the most massive stellar clump) 
+		# 	center = pf.arr([ 2.00426673674,  1.61153523084,  2.12564895041], 'code_length')
                 if codes[code] == "ART-I" or codes[code] == "ART-II" or codes[code] == "ENZO"  or codes[code] == "RAMSES":
 			proj_region = pf.box(center - YTArray([figure_width, figure_width, figure_width], 'kpc'),
 		 			     center + YTArray([figure_width, figure_width, figure_width], 'kpc')) # projected images made using a (2*figure_width)^3 box for AMR codes
@@ -875,13 +897,13 @@ for time in range(len(times)):
 			halo_ad2 = hc2.halos_ds.all_data()	
 			star_clump_masses_fof[time].append(np.log10(halo_ad2['particle_mass'][:].in_units("Msun")))
 			# most_massive = halo_ad['particle_mass'].max().in_units('Msun')
-			# cen3 = [halo_ad['particle_position_x'][halo_ad['particle_mass'] == most_massive][0].in_units('code_length').d, 
+			# cen4 = [halo_ad['particle_position_x'][halo_ad['particle_mass'] == most_massive][0].in_units('code_length').d, 
 			# 	halo_ad['particle_position_y'][halo_ad['particle_mass'] == most_massive][0].in_units('code_length').d, 
 			# 	halo_ad['particle_position_z'][halo_ad['particle_mass'] == most_massive][0].in_units('code_length').d]
 
 
 			# Add additional star_map with annotated clumps if requested
-			if draw_star_clump_stats == 2:
+			if draw_star_clump_stats >= 2:
 				for ax in range(1, 3):  
 					p271 = ParticleProjectionPlot(pf, ax, (PartType_Star_to_use, "particle_mass"), center = center, data_source=proj_region, width = (figure_width, 'kpc'), weight_field = None, fontsize=9)
 					p271.set_unit((PartType_Star_to_use, "particle_mass"), 'Msun')
@@ -1487,7 +1509,7 @@ for time in range(len(times)):
 			# Add difference plot between 1st and 2nd datasets, if requested
 			if draw_density_DF == 2 and time != 0:
 				if dataset_num == 2:
-					pf_1st = load_dataset(1, time, code, codes, filenames[0]) # load 1st dataset
+					pf_1st = load_dataset(1, time, code, codes, filenames[0]) # load 1st datasets
 					v, cen = pf_1st.h.find_max(("gas", "density"))
 					sp = pf_1st.sphere(cen, (30.0, "kpc")) 
 					cen2 = sp.quantities.center_of_mass(use_gas=True, use_particles=False).in_units("kpc")
@@ -1596,7 +1618,7 @@ for time in range(len(times)):
 				height_DF_profiles[time].append(p8.profiles[0]["Mass_2"].in_units('Msun').d)
 		
 		# STAR FORMATION RATE + CUMULATIVE STELLAR MASS GROWTH IN TIME
-		if draw_SFR == 1 and time != 0:
+		if draw_SFR >= 1 and time != 0:
 			from yt.units.dimensions import length # Below are tricks to make StarFormationRate() work, particularly with "volume" argument, as it currently works only with comoving datasets
 			pf.unit_registry.add('pccm', pf.unit_registry.lut['pc'][0], length, "\\rm{pc}/(1+z)") 
 			pf.hubble_constant = 0.71; pf.omega_lambda = 0.73; pf.omega_matter = 0.27; pf.omega_curvature = 0.0
@@ -1645,9 +1667,38 @@ for time in range(len(times)):
 	if draw_star_map == 1 and time != 0:
 		fig_star_map[time].savefig("Star_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 	if draw_star_clump_stats >= 1 and time != 0:
-		if draw_star_clump_stats == 2:
+		if draw_star_clump_stats >= 2:
 			fig_star_map_2[time].savefig("Star_with_clumps_HOP_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)		
 			fig_star_map_3[time].savefig("Star_with_clumps_FOF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)		
+		if draw_star_clump_stats == 3:
+			pf_clump_ref = load_dataset(2, 1, 0, ['GIZMO'], 
+						    [['dummy', '/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/GIZMO/AGORA_disk_second_ps1.5/snapshot_temp_100_last']])
+			PartType_Star_to_use = "Stars"
+			if os.path.exists("./halo_catalogs/hop_%s_%05d_high_floor/hop_%s_%05d_high_floor.0.h5" % ('GIZMO', 500, 'GIZMO', 500)) == False:
+  				hc_clump_ref = HaloCatalog(data_ds=pf_clump_ref, finder_method='hop', output_dir="./halo_catalogs/hop_%s_%05d_high_floor" % ('GIZMO', 500), \
+ 							 finder_kwargs={'threshold': 2e8, 'dm_only': False, 'ptype': PartType_Star_to_use})
+				hc_clump_ref.add_filter('quantity_value', 'particle_mass', '>', 2.6e6, 'Msun') 
+				hc_clump_ref.add_filter('quantity_value', 'particle_mass', '<', 2.6e8, 'Msun') 
+  				hc_clump_ref.create()  			
+			halo_ds_clump_ref = load("./halo_catalogs/hop_%s_%05d_high_floor/hop_%s_%05d_high_floor.0.h5" % ('GIZMO', 500, 'GIZMO', 500))
+			hc_clump_ref = HaloCatalog(halos_ds=halo_ds_clump_ref, output_dir="./halo_catalogs/hop_%s_%05d_high_floor" % ('GIZMO', 500))
+			hc_clump_ref.load()
+
+			halo_ad_clump_ref = hc_clump_ref.halos_ds.all_data()	
+			star_clump_masses_hop_ref.append(np.log10(halo_ad_clump_ref['particle_mass'][:].in_units("Msun")))
+
+			if os.path.exists("./halo_catalogs/fof_%s_%05d_high_floor/fof_%s_%05d_high_floor.0.h5" % ('GIZMO', 500, 'GIZMO', 500)) == False:
+			 	hc2_clump_ref = HaloCatalog(data_ds=pf_clump_ref, finder_method='fof', output_dir="./halo_catalogs/fof_%s_%05d_high_floor" %  ('GIZMO', 500), \
+							  finder_kwargs={'link': 0.0025, 'dm_only': False, 'ptype': PartType_Star_to_use})
+				hc2_clump_ref.add_filter('quantity_value', 'particle_mass', '>', 2.6e6, 'Msun') 
+				hc2_clump_ref.add_filter('quantity_value', 'particle_mass', '<', 2.6e8, 'Msun') 
+			 	hc2_clump_ref.create()
+			halo_ds2_clump_ref = load("./halo_catalogs/fof_%s_%05d_high_floor/fof_%s_%05d_high_floor.0.h5" % ('GIZMO', 500, 'GIZMO', 500))
+			hc2_clump_ref = HaloCatalog(halos_ds=halo_ds2_clump_ref, output_dir="./halo_catalogs/fof_%s_%05d_high_floor" % ('GIZMO', 500))
+			hc2_clump_ref.load()
+
+			halo_ad2_clump_ref = hc2_clump_ref.halos_ds.all_data()	
+			star_clump_masses_fof_ref.append(np.log10(halo_ad2_clump_ref['particle_mass'][:].in_units("Msun")))
 		plt.clf()
 		fig = plt.figure(figsize=(8, 4))
 		gridspec.GridSpec(1, 2)
@@ -1672,7 +1723,7 @@ for time in range(len(times)):
 			plt.legend(codes_plotted, loc=1, frameon=True, ncol=1, fancybox=True)
 			leg = plt.gca().get_legend()
 			ltext = leg.get_texts()
-			plt.setp(ltext, fontsize='small')
+			plt.setp(ltext, fontsize='xx-small')
 		plt.savefig("star_clump_stats_HOP_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
 		# Reiterate for cumulative plots
@@ -1691,16 +1742,23 @@ for time in range(len(times)):
 					lines = plt.plot(hist[1][:-1]+dbin, np.cumsum(hist[0][::-1])[::-1], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], \
 								 marker=marker_names[code], markeredgecolor='none', linewidth=1.2, alpha=0.8)
 					codes_plotted.append(codes[code])
+			if draw_star_clump_stats == 3 and star_clump_stats_i == 2:
+				hist_clump_ref = np.histogram(star_clump_masses_hop_ref, bins=10, range=(6., 8.5))
+				dbin = 0.5*(hist[1][1] - hist[1][0])
+				lines = plt.plot(hist_clump_ref[1][:-1]+dbin, np.cumsum(hist_clump_ref[0][::-1])[::-1], color='k', linestyle='--', marker='*', markeredgecolor='none', linewidth=1.2, alpha=0.8)
+				codes_plotted.append('GIZMO-ps2')
 			plt.xlim(6, 8.5)
-			plt.ylim(-0.1, 30)
+#			plt.ylim(-0.1, 30)
+			plt.ylim(0.9, 50)
+			plt.semilogy()
 			plt.grid(True)
 			plt.xlabel("$\mathrm{log[Newly\ Formed\ Stellar\ Clump\ Mass\ (M_{\odot})]}$")
 			if star_clump_stats_i == 1: 
-				plt.ylabel("$\mathrm{Cumulative\ Stellar\ Clump\ Counts, \ \ N_{clump}(>M)}}$")
-			plt.legend(codes_plotted, loc=1, frameon=True, ncol=1, fancybox=True)
+				plt.ylabel("$\mathrm{Cumulative\ Clump\ Counts, \ \ N_{clump}(>M)}}$")
+			plt.legend(codes_plotted, loc=1, frameon=True, ncol=1, fancybox=True, labelspacing=0.15, borderpad=0.3)
 			leg = plt.gca().get_legend()
 			ltext = leg.get_texts()
-			plt.setp(ltext, fontsize='small')
+			plt.setp(ltext, fontsize='xx-small')
 		plt.savefig("star_clump_stats_HOP_cumulative_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
 
@@ -1727,7 +1785,7 @@ for time in range(len(times)):
 			plt.legend(codes_plotted, loc=1, frameon=True, ncol=1, fancybox=True)
 			leg = plt.gca().get_legend()
 			ltext = leg.get_texts()
-			plt.setp(ltext, fontsize='small')
+			plt.setp(ltext, fontsize='xx-small')
 		plt.savefig("star_clump_stats_FOF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
 		# Reiterate for cumulative plots
@@ -1746,16 +1804,23 @@ for time in range(len(times)):
 					lines = plt.plot(hist[1][:-1]+dbin, np.cumsum(hist[0][::-1])[::-1], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], \
 								 marker=marker_names[code], markeredgecolor='none', linewidth=1.2, alpha=0.8)
 					codes_plotted.append(codes[code])
+			if draw_star_clump_stats == 3 and star_clump_stats_i == 2:
+				hist_clump_ref = np.histogram(star_clump_masses_fof_ref, bins=10, range=(6., 8.5))
+				dbin = 0.5*(hist[1][1] - hist[1][0])
+				lines = plt.plot(hist_clump_ref[1][:-1]+dbin, np.cumsum(hist_clump_ref[0][::-1])[::-1], color='k', linestyle='--', marker='*', markeredgecolor='none', linewidth=1.2, alpha=0.8)
+				codes_plotted.append('GIZMO-ps2')
 			plt.xlim(6, 8.5)
-			plt.ylim(-0.1, 30)
+#			plt.ylim(-0.1, 30)
+			plt.ylim(0.9, 50)
+			plt.semilogy()
 			plt.grid(True)
 			plt.xlabel("$\mathrm{log[Newly\ Formed\ Stellar\ Clump\ Mass\ (M_{\odot})]}$")
 			if star_clump_stats_i == 1: 
-				plt.ylabel("$\mathrm{Cumulative\ Stellar\ Clump\ Counts, \ \ N_{clump}(>M)}}$")
-			plt.legend(codes_plotted, loc=1, frameon=True, ncol=1, fancybox=True)
+				plt.ylabel("$\mathrm{Cumulative\ Clump\ Counts, \ \ N_{clump}(>M)}}$")
+			plt.legend(codes_plotted, loc=1, frameon=True, ncol=1, fancybox=True, labelspacing=0.15, borderpad=0.3)
 			leg = plt.gca().get_legend()
 			ltext = leg.get_texts()
-			plt.setp(ltext, fontsize='small')
+			plt.setp(ltext, fontsize='xx-small')
 		plt.savefig("star_clump_stats_FOF_cumulative_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
 	if draw_SFR_map >= 1 and time != 0:
@@ -1872,6 +1937,11 @@ for time in range(len(times)):
 			plt.grid(True)
 			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 			plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{v} - \mathrm{\bar v})/\mathrm{\bar v}$", fontsize='large')
+			if add_mean_fractional_dispersion == 1:
+				mean_fractional_dispersion = (np.std(np.array(pos_vel_profiles[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < pos_vel_xs[time][0]) & (pos_vel_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+				mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+				plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.35, 0.08), size=10, xycoords='axes fraction')
+#				plt.text(12, 0.3, "mean dispersion = %.3f or %.3f dex " % (mean_fractional_dispersion, mean_fractional_dispersion_in_dex), ha="center", va="center", size=8, bbox=dict(boxstyle="round", fc="w", ec="0.5", alpha=0.9))
 			plt.savefig("pos_vel_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
 		if draw_pos_vel_PDF >= 3 and time != 0:
@@ -1883,8 +1953,6 @@ for time in range(len(times)):
 			plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=0.5)
 			for code in range(len(codes)):
 				lines = plt.plot(pos_disp_xs[time][code], pos_disp_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], marker=marker_names[code], markeredgecolor='none', linewidth=1.2, alpha=0.8)
-			# for code in range(len(codes)):
-			# 	lines = plt.plot(pos_disp_vert_xs[time][code], pos_disp_vert_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], marker=marker_names[code], markeredgecolor='none', markersize=4, linewidth=0.8, alpha=0.4)
 			plt.xlim(0, 14)
 			plt.ylim(0, 170)
 			plt.grid(True)
@@ -1904,6 +1972,10 @@ for time in range(len(times)):
 			plt.grid(True)
 			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 			plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{\sigma} - \mathrm{\bar \sigma})/\mathrm{\bar \sigma}$", fontsize='large')
+			if add_mean_fractional_dispersion == 1:
+				mean_fractional_dispersion = (np.std(np.array(pos_disp_profiles[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < pos_disp_xs[time][0]) & (pos_disp_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+				mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+				plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.35, 0.08), size=10, xycoords='axes fraction')
 			plt.savefig("pos_disp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.subplot2grid((5, 1), (4, 0), rowspan=1)
 			for code in range(len(codes)):
@@ -1943,6 +2015,10 @@ for time in range(len(times)):
 			plt.grid(True)
 			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 			plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{\sigma} - \mathrm{\bar \sigma})/\mathrm{\bar \sigma}$", fontsize='large')
+			if add_mean_fractional_dispersion == 1:
+				mean_fractional_dispersion = (np.std(np.array(pos_disp_vert_profiles[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < pos_disp_vert_xs[time][0]) & (pos_disp_vert_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+				mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+				plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.35, 0.08), size=10, xycoords='axes fraction')
 			plt.savefig("pos_disp_vert_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
 	if draw_star_pos_vel_PDF >= 1 and time != 0:
@@ -1975,6 +2051,10 @@ for time in range(len(times)):
 			plt.grid(True)
 			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 			plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{v} - \mathrm{\bar v})/\mathrm{\bar v}$", fontsize='large')
+			if add_mean_fractional_dispersion == 1:
+				mean_fractional_dispersion = (np.std(np.array(star_pos_vel_profiles[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < star_pos_vel_xs[time][0]) & (star_pos_vel_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+				mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+				plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.35, 0.08), size=10, xycoords='axes fraction')
 			plt.savefig("star_pos_vel_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
 		if draw_star_pos_vel_PDF >= 3 and time != 0:
@@ -1986,8 +2066,6 @@ for time in range(len(times)):
 			plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=0.5)
 			for code in range(len(codes)):
 				lines = plt.plot(star_pos_disp_xs[time][code], star_pos_disp_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], marker=marker_names[code], markeredgecolor='none', linewidth=1.2, alpha=0.8)
-			# for code in range(len(codes)):
-			# 	lines = plt.plot(star_pos_disp_vert_xs[time][code], star_pos_disp_vert_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], marker=marker_names[code], markeredgecolor='none', markersize=4, linewidth=0.8, alpha=0.4)
 			plt.xlim(0, 14)
 			plt.ylim(0, 170)
 			plt.grid(True)
@@ -2007,6 +2085,10 @@ for time in range(len(times)):
 			plt.grid(True)
 			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 			plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{\sigma} - \mathrm{\bar \sigma})/\mathrm{\bar \sigma}$", fontsize='large')
+			if add_mean_fractional_dispersion == 1:
+				mean_fractional_dispersion = (np.std(np.array(star_pos_disp_profiles[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < star_pos_disp_xs[time][0]) & (star_pos_disp_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+				mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+				plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.35, 0.08), size=10, xycoords='axes fraction')
 			plt.savefig("star_pos_disp_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.subplot2grid((5, 1), (4, 0), rowspan=1)
 			for code in range(len(codes)):
@@ -2046,6 +2128,10 @@ for time in range(len(times)):
 			plt.grid(True)
 			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 			plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{\sigma} - \mathrm{\bar \sigma})/\mathrm{\bar \sigma}$", fontsize='large')
+			if add_mean_fractional_dispersion == 1:
+				mean_fractional_dispersion = (np.std(np.array(star_pos_disp_vert_profiles[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < star_pos_disp_vert_xs[time][0]) & (star_pos_disp_vert_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+				mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+				plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.35, 0.08), size=10, xycoords='axes fraction')
 			plt.savefig("star_pos_disp_vert_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
 	if draw_rad_height_PDF >= 1:
@@ -2078,6 +2164,10 @@ for time in range(len(times)):
 			plt.grid(True)
 			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 			plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{h} - \mathrm{\bar h})/\mathrm{\bar h}$", fontsize='large')
+			if add_mean_fractional_dispersion == 1:
+				mean_fractional_dispersion = (np.std(np.array(rad_height_profiles[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < rad_height_xs[time][0]) & (rad_height_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+				mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+				plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.35, 0.08), size=10, xycoords='axes fraction')
 			plt.savefig("rad_height_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
 	if draw_metal_PDF == 1:
@@ -2096,6 +2186,8 @@ for time in range(len(times)):
 		plt.xlim(1e-28, 1e-21) 
 		plt.ylim(1e4, 1e9) # accumulation=False
 		#plt.ylim(1e5, 2e10) # accumulation=True
+		if time != 0 and dataset_num == 2:
+			plt.axvline(x = 1.67e-24*10, color='k', linestyle ='--', linewidth=2, alpha=0.7) # SF threshold density
 		plt.grid(True)
 		plt.xlabel("$\mathrm{Density\ (g/cm^3)}$", fontsize='large')
 		plt.ylabel(r"$\mathrm{Mass,}\/\mathrm{d}M\mathrm{/dlog}\/\mathrm{\rho}\/\mathrm{(M_{\odot})}$", fontsize='large')
@@ -2115,6 +2207,10 @@ for time in range(len(times)):
 		plt.locator_params(axis='y',nbins=4)
 		plt.xlabel("$\mathrm{Density\ (g/cm^3)}$", fontsize='large')
 		plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{m} - \mathrm{\bar m})/\mathrm{\bar m}$", fontsize='large')
+		if add_mean_fractional_dispersion == 1:
+			mean_fractional_dispersion = (np.std(np.array(density_DF_profiles[time]), axis=0)/ave_profiles)[(mean_dispersion_density_range[0] < density_DF_xs[time][0]) & (density_DF_xs[time][0] < mean_dispersion_density_range[1])].mean()
+			mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+			plt.annotate("Mean fractional dispersion for %.1e < rho < %.1e = %.3f (%.3f dex) " % (mean_dispersion_density_range[0], mean_dispersion_density_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.27, 0.84), size=10, xycoords='axes fraction')
 		plt.savefig("density_DF_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
 		if draw_density_DF == 2 and time != 0 and dataset_num == 2:
@@ -2127,6 +2223,7 @@ for time in range(len(times)):
 			plt.xscale('log')
 			plt.xlim(1e-28, 1e-21) 
 			plt.ylim(-7, 3) 
+			plt.axvline(x = 1.67e-24*10, color='k', linestyle ='--', linewidth=2, alpha=0.7) # SF threshold density
 			plt.grid(True)
 			plt.xlabel("$\mathrm{Density\ (g/cm^3)}$", fontsize='large')
 			plt.ylabel(r"$\mathrm{Mass\ Change,}\/\mathrm{\Delta}(\mathrm{d}M\mathrm{/dlog}\/\mathrm{\rho})\/\mathrm{(10^8 M_{\odot})}$", fontsize='large')
@@ -2142,7 +2239,9 @@ for time in range(len(times)):
 			plt.ylabel(r"$\mathtt{symlog}[\/\mathrm{\Delta}(\mathrm{d}M\mathrm{/dlog}\/\mathrm{\rho})\/\mathrm{(10^8 M_{\odot})}\/]$", fontsize='large')
 			plt.xscale('log')
 			plt.yscale('symlog', linthreshy=0.01) 
+			plt.xlim(1e-28, 1e-21) 
 			plt.ylim(-10, 10) 
+			plt.axvline(x = 1.67e-24*10, color='k', linestyle ='--', linewidth=2, alpha=0.7) # SF threshold density
 			plt.grid(True)
 			plt.savefig("density_DF_change_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
@@ -2198,6 +2297,10 @@ for time in range(len(times)):
 		plt.grid(True)
 		plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 		plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{\Sigma} - \mathrm{\bar \Sigma})/\mathrm{\bar \Sigma}$", fontsize='large')
+		if add_mean_fractional_dispersion == 1:
+			mean_fractional_dispersion = (np.std(np.array(surface_density[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < radius_DF_xs[time][0]) & (radius_DF_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+			mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+			plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.35, 0.08), size=10, xycoords='axes fraction')
 		plt.savefig("gas_surface_density_radial_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
 	if draw_star_radius_DF >= 1 and time != 0:
@@ -2253,6 +2356,10 @@ for time in range(len(times)):
 		plt.locator_params(axis='y',nbins=4)
 		plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 		plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{\Sigma} - \mathrm{\bar \Sigma})/\mathrm{\bar \Sigma}$", fontsize='large')
+		if add_mean_fractional_dispersion == 1:
+			mean_fractional_dispersion = (np.std(np.array(star_surface_density[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < star_radius_DF_xs[time][0]) & (star_radius_DF_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+			mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+			plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.02, 0.84), size=10, xycoords='axes fraction')
 		plt.savefig("star_surface_density_radial_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
 
@@ -2291,6 +2398,10 @@ for time in range(len(times)):
 			plt.locator_params(axis='y',nbins=4)
 			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 			plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{\Sigma} - \mathrm{\bar \Sigma})/\mathrm{\bar \Sigma}$", fontsize='large')
+			# if add_mean_fractional_dispersion == 1:
+			# 	mean_fractional_dispersion = (np.std(np.array(sfr_surface_density[time]), axis=0)/ave_profiles)[(mean_dispersion_radius_range[0] < sfr_radius_DF_xs[time][0]) & (sfr_radius_DF_xs[time][0] < mean_dispersion_radius_range[1])].mean()
+			# 	mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+			#       plt.annotate("Mean fractional dispersion for %d < r < %d kpc = %.3f (%.3f dex) " % (mean_dispersion_radius_range[0], mean_dispersion_radius_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.02, 0.84), size=10, xycoords='axes fraction')
 			plt.savefig("sfr_surface_density_radial_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 			plt.clf()
 
@@ -2387,9 +2498,13 @@ for time in range(len(times)):
 		plt.locator_params(axis='y',nbins=4)
 		plt.xlabel("$\mathrm{Vertical\ Height\ (kpc)}$", fontsize='large')
 		plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{\Sigma} - \mathrm{\bar \Sigma})/\mathrm{\bar \Sigma}$", fontsize='large')
+		if add_mean_fractional_dispersion == 1:
+			mean_fractional_dispersion = (np.std(np.array(height_surface_density[time]), axis=0)/ave_profiles)[(mean_dispersion_height_range[0] < height_DF_xs[time][0]) & (height_DF_xs[time][0] < mean_dispersion_height_range[1])].mean()
+			mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+			plt.annotate("Mean fractional dispersion for %.1f < z < %.1f kpc = %.3f (%.3f dex) " % (mean_dispersion_height_range[0], mean_dispersion_height_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.02, 0.84), size=10, xycoords='axes fraction')
 		plt.savefig("gas_surface_density_vertical_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
-	if draw_SFR == 1 and time != 0:
+	if draw_SFR >= 1 and time != 0:
 		plt.clf()
 #		plt.subplot(111)#, aspect=1e-7)
 		fig = plt.figure(figsize=(8, 6))
@@ -2418,11 +2533,21 @@ for time in range(len(times)):
 		plt.grid(True)
 		plt.xlabel("$\mathrm{Time\ (Myr)}$", fontsize='large')
 		plt.ylabel("$\mathrm{Star\ Formation\ Rate\ (M_{\odot}/yr)}$", fontsize='large')
-		plt.legend(codes, loc=2, frameon=True, ncol=2, fancybox=True)
+		if draw_SFR == 2:
+			pf_sfr_ref = load_dataset(2, 1, 0, ['GIZMO'], 
+						  [['dummy', '/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/GIZMO/AGORA_disk_second_ps1.5/snapshot_temp_100_last']])
+			pf_sfr_ref.unit_registry.add('pccm', pf_sfr_ref.unit_registry.lut['pc'][0], length, "\\rm{pc}/(1+z)") 
+			pf_sfr_ref.hubble_constant = 0.71; pf_sfr_ref.omega_lambda = 0.73; pf_sfr_ref.omega_matter = 0.27; pf_sfr_ref.omega_curvature = 0.0
+			sp_sfr_ref = pf_sfr_ref.sphere(center, (0.5*figure_width, "kpc"))
+			draw_SFR_mass_ref = sp_sfr_ref[(PartType_Star_to_use, "particle_mass")].in_units('Msun')
+			draw_SFR_ct_ref   = sp_sfr_ref[(PartType_Star_to_use, FormationTimeType_to_use)].in_units('Myr')
+			sfr_ref = StarFormationRate(pf_sfr_ref, star_mass = draw_SFR_mass_ref, star_creation_time = draw_SFR_ct_ref, 
+						    volume = sp_sfr_ref.volume(), bins = 25)
+			lines = plt.plot(sfr_ref.time.in_units('Myr'), sfr_ref.Msol_yr, color='k', linestyle='--', marker='*', markeredgecolor='none', linewidth=1.2, alpha=0.8)
+		plt.legend(codes+['GIZMO-ps2'], loc=2, frameon=True, ncol=2, fancybox=True)
 		leg = plt.gca().get_legend()
 		ltext = leg.get_texts()
 		plt.setp(ltext, fontsize='small')
-
 		plt.subplot2grid((4, 1), (3, 0), rowspan=1)
 		ave_profiles = np.mean(np.array(sfr_sfrs[time]), axis=0)
 		for code in range(len(codes)):
@@ -2432,6 +2557,10 @@ for time in range(len(times)):
 		plt.grid(True)
 		plt.xlabel("$\mathrm{Time\ (Myr)}$", fontsize='large')
 		plt.ylabel(r"$\mathrm{Residual,}\/(\mathrm{\dot{\rho}_\star} - \mathrm{\bar{\dot{\rho}_\star}})/\mathrm{\bar{\dot{\rho}_\star}}$", fontsize='large')
+		if add_mean_fractional_dispersion == 1:
+			mean_fractional_dispersion = (np.std(np.array(sfr_sfrs[time]), axis=0)/ave_profiles)[(mean_dispersion_time_range[0] < sfr_ts[time][0]) & (sfr_ts[time][0] < mean_dispersion_time_range[1])].mean()
+			mean_fractional_dispersion_in_dex = np.log10(1.+mean_fractional_dispersion)
+			plt.annotate("Mean fractional dispersion for %d < t < %d Myr = %.3f (%.3f dex) " % (mean_dispersion_time_range[0], mean_dispersion_time_range[1], mean_fractional_dispersion, mean_fractional_dispersion_in_dex), xy=(0.35, 0.08), size=10, xycoords='axes fraction')
 		plt.savefig("SFR_%dMyr" % times[time], bbox_inches='tight', pad_inches=0.03, dpi=300)
 		plt.clf()
 	if draw_cut_through == 1:
