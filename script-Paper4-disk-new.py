@@ -34,14 +34,14 @@ from scipy.stats import kde
 from subprocess import call
 mylog.setLevel(1)
 
-draw_density_map                 = 0#1           # 0/1         = OFF/ON
-draw_temperature_map             = 0#1           # 0/1         = OFF/ON
-draw_cellsize_map                = 0#3           # 0/1/2/3     = OFF/ON/ON now with resolution map where particle_size is defined as [M/rho]^(1/3) for SPH/ON with both cell_size and resolution maps
-draw_elevation_map               = 0#1           # 0/1         = OFF/ON
-draw_metal_map                   = 0#1           # 0/1/2       = OFF/ON/ON with total metal mass in the simulation annotated (this will be inaccurate for SPH)
+draw_density_map                 = 1#1           # 0/1         = OFF/ON
+draw_temperature_map             = 1#1           # 0/1         = OFF/ON
+draw_cellsize_map                = 3#3           # 0/1/2/3     = OFF/ON/ON now with resolution map where particle_size is defined as [M/rho]^(1/3) for SPH/ON with both cell_size and resolution maps
+draw_elevation_map               = 1#1           # 0/1         = OFF/ON
+draw_metal_map                   = 1#1           # 0/1/2       = OFF/ON/ON with total metal mass in the simulation annotated (this will be inaccurate for SPH)
 draw_zvel_map                    = 0             # 0/1         = OFF/ON
-draw_star_map                    = 0#1           # 0/1         = OFF/ON
-draw_star_clump_stats            = 0#3           # 0/1/2/3     = OFF/ON/ON with additional star_map with annotated clumps/ON with addtional star_map + extra clump mass function with GIZMO-ps2
+draw_star_map                    = 1#1           # 0/1         = OFF/ON
+draw_star_clump_stats            = 3#3           # 0/1/2/3     = OFF/ON/ON with additional star_map with annotated clumps/ON with addtional star_map + extra clump mass function with GIZMO-ps2
 draw_SFR_map                     = 0###2         # 0/1/2       = OFF/ON/ON with local K-S plot using patches
 draw_PDF                         = 0###3         # 0/1/2/3     = OFF/ON/ON with constant pressure/entropy lines/ON with additional annotations such as 1D profile from a specific code (CHANGA)
 draw_pos_vel_PDF                 = 0##4          # 0/1/2/3/4   = OFF/ON/ON with 1D profile/ON also with 1D dispersion profile/ON also with separate 1D vertical dispersion profiles
@@ -49,10 +49,10 @@ draw_star_pos_vel_PDF            = 0##4          # 0/1/2/3/4   = OFF/ON/ON with 
 draw_rad_height_PDF              = 0##2          # 0/1/2/3     = OFF/ON/ON with 1D profile/ON with analytic ftn subtracted
 draw_metal_PDF                   = 0##1          # 0/1         = OFF/ON
 draw_density_DF                  = 2#2           # 0/1/2       = OFF/ON/ON with difference plot between 1st and 2nd datasets (when 2, dataset_num should be set to 2)
-draw_radius_DF                   = 0#1           # 0/1         = OFF/ON
-draw_star_radius_DF              = 0#2           # 0/1/2       = OFF/ON/ON with SFR profile and K-S plot (when 2, this automatically turns on draw_radius_DF)
-draw_height_DF                   = 0#1           # 0/1         = OFF/ON
-draw_SFR                         = 0#2           # 0/1/2       = OFF/ON/ON with extra line with GIZMO-ps2
+draw_radius_DF                   = 1#1           # 0/1         = OFF/ON
+draw_star_radius_DF              = 2#2           # 0/1/2       = OFF/ON/ON with SFR profile and K-S plot (when 2, this automatically turns on draw_radius_DF)
+draw_height_DF                   = 1#1           # 0/1         = OFF/ON
+draw_SFR                         = 2#2           # 0/1/2       = OFF/ON/ON with extra line with GIZMO-ps2
 draw_cut_through                 = 0             # 0/1         = OFF/ON
 add_nametag                      = 1#1           # 0/1         = OFF/ON
 add_mean_fractional_dispersion   = 0#0           # 0/1         = OFF/ON
@@ -93,17 +93,13 @@ filenames = [[[file_location[0]+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location[0]+
 	      [file_location[0]+'GADGET-3/AGORA_ISO_LOW_DRY/snap_iso_dry_000.hdf5', file_location[0]+'GADGET-3/AGORA_ISO_LOW_DRY/snap_iso_dry_010.hdf5'],
 	      [file_location[0]+'GEAR/snapshot_0000', file_location[0]+'GEAR/snapshot_0500'],
 	      [file_location[0]+'GIZMO/snapshot_temp_000', file_location[0]+'GIZMO/snapshot_temp_100']],
-#	     [[file_location[1]+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location[1]+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d'],
-	     [['/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/ART-I/wrong_before_091216/IC/AGORA_Galaxy_LOW.d',
-	       '/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/ART-I/wrong_before_091216/t0.5Gyr/10MpcBox_csf512_02350.d'],
+	     [[file_location[1]+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location[1]+'ART-I/t0.5Gyr/10MpcBox_csf512_02350.d'],
 	      [file_location[1]+'ART-II/SF_FBth_def_2p/OUT/AGORA_LOW_000000.art', file_location[1]+'ART-II/SF_FBth_def_2p/OUT/AGORA_LOW_000311.art'],
 	      [file_location[1]+'ENZO/DD0000/DD0000', file_location[1]+'ENZO/DD0050/DD0050'],
 	      [file_location[1]+'RAMSES/output_00001/info_00001.txt', file_location[1]+'RAMSES/output_00216/info_00216.txt'],
 	      [file_location[1]+'CHANGA/disklow/disklow.000000', file_location[1]+'CHANGA/disklow/disklow.000500'],
 	      [file_location[1]+'GASOLINE/LOW_dataset1.00001', file_location[1]+'GASOLINE/LOW_dataset2.00335'],
-#	      [file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_000.hdf5', file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_010.hdf5'],
-              ['/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/GADGET-3/wrong_before_090416/snap_iso_sf_000.hdf5',
-	       '/lustre/ki/pfs/mornkr/080112_CHaRGe/pfs-hyades/AGORA-DISK-repository/Grackle+SF+ThermalFbck/GADGET-3/wrong_before_090416/snap_iso_sf_010.hdf5'],
+	      [file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_000.hdf5', file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_010.hdf5'],
 	      [file_location[1]+'GEAR/snapshot_0000', file_location[1]+'GEAR/snapshot_0500'],
 	      [file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
 
@@ -130,20 +126,10 @@ filenames = [[[file_location[0]+'ART-I/IC/AGORA_Galaxy_LOW.d', file_location[0]+
 #  	     [[file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_000.hdf5', file_location[1]+'GADGET-3/AGORA_ISO_LOW_SF_SNII_Thermal_Chevalier_SFT10/snap_iso_sf_010.hdf5']]]
 # codes = ['GEAR']
 # filenames = [[[file_location[0]+'GEAR/snapshot_0000', file_location[0]+'GEAR/snapshot_0500']],
-# 	     [[file_location[1]+'GEAR/snapshot_0000', file_location[1]+'GEAR/snapshot_0500']]]
+#  	     [[file_location[1]+'GEAR/snapshot_0000', file_location[1]+'GEAR/snapshot_0500']]]
 # codes = ['GIZMO']
 # filenames = [[[file_location[0]+'GIZMO/snapshot_temp_000', file_location[0]+'GIZMO/snapshot_temp_100']],
 #   	     [[file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
-# codes = ['ENZO', 'GIZMO']
-# filenames = [[[file_location[0]+'ENZO/DD0000/DD0000', file_location[0]+'ENZO/DD0100/DD0100'],
-# 	      [file_location[0]+'GIZMO/snapshot_temp_000', file_location[0]+'GIZMO/snapshot_temp_100']],
-#  	     [[file_location[1]+'ENZO/DD0000/DD0000', file_location[1]+'ENZO/DD0050/DD0050'],
-#  	      [file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
-# codes = ['GEAR', 'GIZMO']
-# filenames = [[[file_location[0]+'GEAR/snapshot_0000', file_location[0]+'GEAR/snapshot_0500'],
-# 	      [file_location[0]+'GIZMO/snapshot_temp_000', file_location[0]+'GIZMO/snapshot_temp_100']],
-#  	     [[file_location[1]+'GEAR/snapshot_0000', file_location[1]+'GEAR/snapshot_0500'],
-#  	      [file_location[1]+'GIZMO/snapshot_temp_000', file_location[1]+'GIZMO/snapshot_temp_100']]]
 
 def load_dataset(dataset_num, time, code, codes, filenames_entry):
 	if codes[code] == 'ART-I': # ART frontend doesn't find the accompanying files, so we specify them; see http://yt-project.org/docs/dev/examining/loading_data.html#art-data
@@ -1027,7 +1013,7 @@ for time in range(len(times)):
 			
 			p281 = ParticlePhasePlot(sp, (PartType_Star_to_use, "particle_position_x_from_center"), (PartType_Star_to_use, "particle_position_y_from_center"), \
 							 (PartType_Star_to_use, "particle_mass_young_stars_SFR_surface_density_SFR_map"), deposition='cic', weight_field=None, fontsize=9, x_bins=xy_bins, y_bins=xy_bins)
-			p281.set_zlim((PartType_Star_to_use, "particle_mass_young_stars_SFR_surface_density_SFR_map"), 1e-4, 1e1)
+			p281.set_zlim((PartType_Star_to_use, "particle_mass_young_stars_SFR_surface_density_SFR_map"), 3e-4, 3e-1)
 			p281.set_cmap((PartType_Star_to_use, "particle_mass_young_stars_SFR_surface_density_SFR_map"), my_cmap)
 			plot281 = p281.plots[(PartType_Star_to_use, "particle_mass_young_stars_SFR_surface_density_SFR_map")]
 			
@@ -1841,8 +1827,8 @@ for time in range(len(times)):
 				KS_y = np.log10(np.array(sfr_surf_dens_SFR_map[time][code])) 
 				KS_x = KS_x[~np.isinf(KS_x)]
 				KS_y = KS_y[~np.isinf(KS_y)]
-				if codes[code] == "GIZMO": 
-					plt.scatter(KS_x, KS_y, color=color_names[code], edgecolor=color_names[code], s=30, linewidth=0.7, marker=marker_names[code], alpha=0.1)
+				if codes[code] == "CHANGA": 
+					plt.scatter(KS_x, KS_y, color='k', edgecolor='k', s=20, linewidth=0.7, marker=marker_names[code], alpha=0.1)
 				# Draw a 80% contour rather than scattering all the datapoints; see http://stackoverflow.com/questions/19390320/scatterplot-contours-in-matplotlib
 				Gaussian_density_estimation_nbins = 20
 				kernel = kde.gaussian_kde(np.vstack([KS_x, KS_y])) 
@@ -2146,7 +2132,7 @@ for time in range(len(times)):
 			for code in range(len(codes)):
 				lines = plt.plot(rad_height_xs[time][code], rad_height_profiles[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], marker=marker_names[code], markeredgecolor='none', linewidth=1.2, alpha=0.8)
 			plt.xlim(0, 14)
-			plt.ylim(0, 0.6)
+			plt.ylim(0, 0.45)
 			plt.grid(True)
 			plt.xlabel("$\mathrm{Cylindrical\ Radius\ (kpc)}$", fontsize='large')
 			plt.ylabel("$\mathrm{Average\ Vertical\ Height\ (kpc)}$", fontsize='large')
@@ -2529,7 +2515,7 @@ for time in range(len(times)):
 		for code in range(len(codes)):
 			lines = plt.plot(sfr_ts[time][code], sfr_sfrs[time][code], color=color_names[code], linestyle=linestyle_names[np.mod(code, len(linestyle_names))], marker=marker_names[code], markeredgecolor='none', linewidth=1.2, alpha=0.8)
 		plt.xlim(0, times[time])
-		plt.ylim(0, 7)
+		plt.ylim(0, 8)
 		plt.grid(True)
 		plt.xlabel("$\mathrm{Time\ (Myr)}$", fontsize='large')
 		plt.ylabel("$\mathrm{Star\ Formation\ Rate\ (M_{\odot}/yr)}$", fontsize='large')
